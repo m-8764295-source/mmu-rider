@@ -672,8 +672,11 @@ body::before{
 //  FIREBASE
 // ═══════════════════════════════════════════
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, onSnapshot, updateDoc, query, where, orderBy }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getFirestore, collection, doc,
+  onSnapshot, updateDoc, setDoc, getDoc,
+  query, orderBy, arrayUnion, increment, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCkFmMpScduIj1493VWQdDCOAaTUWnWEbk",
@@ -690,15 +693,68 @@ const db  = getFirestore(app);
 // ═══════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════
-const RIDER_PIN = '1234';
-let riderName   = '';
-let isOnline    = false;
-let allOrders   = [];        // all orders from Firestore
-let myActive    = null;      // current active delivery doc
-let completedOrders = [];    // rider's completed
-let todayEarnings = 0;
-let totalEarnings = 0;
-let unsubscribeOrders = null;
+const RIDER_PIN     = '1234';
+const EARN_PER_ORDER = 3.00;
+
+let riderName        = '';
+let riderId          = '';   // Firestore doc ID = name slug e.g. "ahmad_hafiz"
+let isOnline         = false;
+let allOrders        = [];
+let myActive         = null;
+let completedOrders  = [];
+let todayEarnings    = 0;
+let totalEarnings    = 0;
+let unsubOrders      = null;
+let unsubRider       = null; // realtime listener on my rider doc
+
+// Convert name to Firestore-safe ID  e.g. "Ahmad Hafiz" -> "ahmad_hafiz"
+function nameToId(name){ return name.toLowerCase().replace(/\s+/g,'_'); }
+
+// ═══════════════════════════════════════════
+//  RIDER DOC HELPERS  (Firestore: riders/{id})
+// ═══════════════════════════════════════════
+async function initRiderDoc(){
+  const ref = doc(db, 'riders', riderId);
+  const snap = await getDoc(ref);
+  const today = new Date().toDateString();
+
+  if(!snap.exists()){
+    // First time — create doc
+    await setDoc(ref, {
+      name:           riderName,
+      totalEarnings:  0,
+      totalOrders:    0,
+      todayEarnings:  0,
+      todayOrders:    0,
+      todayDate:      today,
+      completedOrders: [],
+      createdAt:      serverTimestamp(),
+    });
+  } else {
+    const data = snap.data();
+    // Reset today stats if it's a new day
+    if(data.todayDate !== today){
+      await updateDoc(ref, { todayEarnings: 0, todayOrders: 0, todayDate: today });
+    }
+  }
+}
+
+function listenToRiderDoc(){
+  if(unsubRider) unsubRider();
+  const ref = doc(db, 'riders', riderId);
+  unsubRider = onSnapshot(ref, snap => {
+    if(!snap.exists()) return;
+    const data = snap.data();
+    const today = new Date().toDateString();
+
+    totalEarnings   = data.totalEarnings  || 0;
+    todayEarnings   = data.todayDate === today ? (data.todayEarnings || 0) : 0;
+    completedOrders = data.completedOrders || [];
+
+    renderHistory();
+    updateEarnings();
+  });
+}
 
 // ═══════════════════════════════════════════
 //  LOGIN
@@ -707,50 +763,63 @@ function doRiderLogin(){
   const name = document.getElementById('rider-select').value;
   const pin  = document.getElementById('rider-pin').value;
   const err  = document.getElementById('rider-err');
+
   if(!name){ err.textContent='⚠️ Please select your name'; err.style.display='block'; return; }
   if(pin !== RIDER_PIN){ err.style.display='block'; setTimeout(()=>err.style.display='none',3000); return; }
 
   riderName = name;
+  riderId   = nameToId(name);
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('rider-name-display').textContent = name.split(' ')[0];
-  initRiderApp();
+
+  // Show loading
+  showToast('⏳ Loading your data...');
+
+  initRiderDoc().then(() => {
+    listenToRiderDoc();  // realtime sync from Firebase
+    initOrderListener();
+  }).catch(e => showToast('❌ Firebase error: ' + e.message));
 }
 window.doRiderLogin = doRiderLogin;
-document.addEventListener('keydown',e=>{ if(e.key==='Enter') doRiderLogin(); });
+document.addEventListener('keydown', e => { if(e.key==='Enter') doRiderLogin(); });
 
 function doLogout(){
   if(myActive){ showToast('⚠️ Finish your active delivery first!'); return; }
-  if(unsubscribeOrders) unsubscribeOrders();
+  if(unsubOrders) unsubOrders();
+  if(unsubRider)  unsubRider();
   document.getElementById('app').style.display='none';
   document.getElementById('login-screen').style.display='flex';
-  isOnline=false; allOrders=[]; myActive=null; completedOrders=[];
-  todayEarnings=0; totalEarnings=0;
+  isOnline=false; allOrders=[]; myActive=null;
+  completedOrders=[]; todayEarnings=0; totalEarnings=0;
+  riderName=''; riderId='';
   document.getElementById('rider-select').value='';
   document.getElementById('rider-pin').value='';
 }
 window.doLogout = doLogout;
 
 // ═══════════════════════════════════════════
-//  INIT
+//  ORDER LISTENER
 // ═══════════════════════════════════════════
-function initRiderApp(){
-  // Listen to ALL orders in realtime
+function initOrderListener(){
   const q = query(collection(db,'orders'), orderBy('timestamp','desc'));
-  unsubscribeOrders = onSnapshot(q, snap => {
+  unsubOrders = onSnapshot(q, snap => {
     allOrders = [];
-    snap.forEach(d => allOrders.push({ docId:d.id, ...d.data(), time: d.data().timestamp?.toDate() || new Date() }));
+    snap.forEach(d => allOrders.push({
+      docId: d.id, ...d.data(),
+      time: d.data().timestamp?.toDate() || new Date()
+    }));
 
-    // Auto-detect if boss assigned an order to me
+    // Auto-detect boss-assigned order
     if(!myActive){
-      const assignedToMe = allOrders.find(o =>
+      const assigned = allOrders.find(o =>
         o.status === 'delivering' &&
-        o.rider === riderName &&
-        o.type === 'delivery'
+        o.rider  === riderName &&
+        o.type   === 'delivery'
       );
-      if(assignedToMe){
-        myActive = assignedToMe;
-        showToast('\uD83D\uDD14 Boss assigned you an order! Check Active tab');
+      if(assigned){
+        myActive = assigned;
+        showToast('🔔 Boss assigned you an order! Go to Active tab 🛵');
         switchTab('active', document.getElementById('nav-active'));
       }
     }
@@ -761,7 +830,8 @@ function initRiderApp(){
       if(updated) myActive = updated;
     }
 
-    renderAll();
+    renderAvailable();
+    renderActive();
   });
 }
 
@@ -775,28 +845,21 @@ function toggleOnline(){
   const lbl = tog.querySelector('.toggle-label');
   if(isOnline){
     tog.classList.add('online');
-    lbl.textContent='ONLINE';
+    lbl.textContent = 'ONLINE';
     showToast('🟢 You are now Online!');
   } else {
     tog.classList.remove('online');
-    lbl.textContent='OFFLINE';
+    lbl.textContent = 'OFFLINE';
     showToast('🔴 You are now Offline');
   }
   document.getElementById('offline-banner').style.display = isOnline ? 'none' : 'flex';
-  renderAll();
+  renderAvailable();
 }
 window.toggleOnline = toggleOnline;
 
 // ═══════════════════════════════════════════
 //  RENDER
 // ═══════════════════════════════════════════
-function renderAll(){
-  renderAvailable();
-  renderActive();
-  renderHistory();
-  updateEarnings();
-}
-
 function timeAgo(date){
   if(!date) return '';
   const d = Math.floor((new Date()-date)/1000);
@@ -805,21 +868,17 @@ function timeAgo(date){
   return Math.floor(d/3600)+'h ago';
 }
 
-// Available = status 'ready' + type 'delivery' + not assigned to someone else
 function renderAvailable(){
   const list = document.getElementById('available-list');
-
   if(!isOnline){
     document.getElementById('offline-banner').style.display='flex';
-    list.innerHTML=`<div class="empty-state"><div class="empty-icon">🔴</div><div class="empty-title">You're Offline</div><div class="empty-sub">Toggle Online above to see available orders</div></div>`;
+    list.innerHTML=`<div class="empty-state"><div class="empty-icon">🔴</div><div class="empty-title">You\'re Offline</div><div class="empty-sub">Toggle Online to see available orders</div></div>`;
     document.getElementById('avail-count').textContent='';
     document.getElementById('new-order-dot').style.display='none';
     return;
   }
   document.getElementById('offline-banner').style.display='none';
 
-  // Ready delivery orders not yet assigned, or assigned to me
-  // Show: unassigned ready orders OR orders boss assigned to me
   const available = allOrders.filter(o =>
     o.type === 'delivery' && !myActive && (
       (o.status === 'ready' && !o.rider) ||
@@ -832,7 +891,7 @@ function renderAvailable(){
   document.getElementById('new-order-dot').style.display = count > 0 ? 'block' : 'none';
 
   if(count === 0){
-    list.innerHTML=`<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">All clear!</div><div class="empty-sub">No available delivery orders right now.<br>Stay online and wait 🛵</div></div>`;
+    list.innerHTML=`<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">All clear!</div><div class="empty-sub">No delivery orders right now.<br>Stay online and wait 🛵</div></div>`;
     return;
   }
 
@@ -863,15 +922,12 @@ function renderAvailable(){
             <div class="address-text">${o.address || 'MMU Campus'}</div>
           </div>
         </div>
-        <div class="phone-row">
-          📞 <a href="tel:${o.phone}">${o.phone}</a>
-        </div>
+        <div class="phone-row">📞 <a href="tel:${o.phone}">${o.phone}</a></div>
         <div class="action-row">
-          <button class="action-btn btn-accept" onclick="acceptOrder('${o.docId}')">🛵 Accept Order · +RM 3.00</button>
+          <button class="action-btn btn-accept" onclick="acceptOrder('${o.docId}')">🛵 Accept · +RM ${EARN_PER_ORDER.toFixed(2)}</button>
         </div>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function renderActive(){
@@ -881,96 +937,81 @@ function renderActive(){
     return;
   }
   const o = myActive;
+  const pickedUp = o._pickedUp || o.status === 'done';
   wrap.innerHTML=`
     <div class="active-delivery">
       <div class="active-label"><div class="active-pulse"></div>ACTIVE DELIVERY</div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div>
-          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--cream);">${o.name}</div>
+          <div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:800;color:var(--cream);">${o.name}</div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px;">${o.code}</div>
         </div>
-        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--green);">RM ${(o.total||0).toFixed(2)}</div>
+        <div style="font-family:\'Syne\',sans-serif;font-size:22px;font-weight:800;color:var(--green);">+RM ${EARN_PER_ORDER.toFixed(2)}</div>
       </div>
-
       <div class="address-row" style="margin-bottom:10px;">
         <span class="address-icon">📦</span>
-        <div>
-          <div class="address-label">Pick up at</div>
-          <div class="address-text">Soy & Oden Stall — MMU Cafeteria</div>
-        </div>
+        <div><div class="address-label">Pick up at</div><div class="address-text">Soy & Oden Stall — MMU Cafeteria</div></div>
       </div>
-
       <div class="address-row" style="margin-bottom:10px;">
         <span class="address-icon">📍</span>
-        <div>
-          <div class="address-label">Deliver to</div>
-          <div class="address-text">${o.address || 'MMU Campus'}</div>
-        </div>
+        <div><div class="address-label">Deliver to</div><div class="address-text">${o.address || 'MMU Campus'}</div></div>
       </div>
-
-      <div class="phone-row">
-        📞 Customer: <a href="tel:${o.phone}" style="color:var(--green);font-family:'DM Mono',monospace;">${o.phone}</a>
-      </div>
-
+      <div class="phone-row">📞 <a href="tel:${o.phone}" style="color:var(--green);font-family:\'DM Mono\',monospace;">${o.phone}</a></div>
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
-        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.08em;margin-bottom:6px;">ORDER ITEMS</div>
+        <div style="font-size:10px;color:var(--text3);font-family:\'DM Mono\',monospace;letter-spacing:.08em;margin-bottom:6px;">ORDER ITEMS</div>
         ${(o.items||[]).map(it=>`<div style="font-size:13px;color:var(--text);margin-bottom:2px;">${it.emoji} ${it.name} ×${it.qty} <span style="color:var(--text3);font-size:11px;">${it.custom}</span></div>`).join('')}
       </div>
-
       <div class="action-row" style="gap:8px;">
-        <a class="action-btn btn-nav" href="https://maps.google.com?q=${encodeURIComponent(o.address||'MMU Cyberjaya')}" target="_blank" style="text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px;">
-          🗺 Maps
-        </a>
-        ${o.status==='delivering'
+        <a class="action-btn btn-nav" href="https://maps.google.com?q=${encodeURIComponent(o.address||'MMU Cyberjaya')}" target="_blank" style="text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px;">🗺 Maps</a>
+        ${pickedUp
           ? `<button class="action-btn btn-deliver" onclick="markDelivered('${o.docId}')">✅ Mark as Delivered</button>`
-          : `<button class="action-btn btn-pickup" onclick="markPickedUp('${o.docId}')">📦 Picked Up from Stall</button>`
-        }
+          : `<button class="action-btn btn-pickup" onclick="markPickedUp('${o.docId}')">📦 Picked Up from Stall</button>`}
       </div>
     </div>
-
-    <!-- Steps progress -->
     <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:14px;">Delivery Progress</div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:\'DM Mono\',monospace;margin-bottom:14px;">Delivery Progress</div>
       ${[
-        {key:'accepted', icon:'✅', label:'Order Accepted',   done: true},
-        {key:'pickup',   icon:'📦', label:'Picked Up at Stall', done: o.status==='delivering'||o.status==='done'},
-        {key:'deliver',  icon:'🏠', label:'Delivered to Customer', done: o.status==='done'},
+        {label:'Order Accepted',      done:true},
+        {label:'Picked Up at Stall',  done:pickedUp},
+        {label:'Delivered to Customer',done:false},
       ].map((step,i)=>`
         <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i<2?'border-bottom:1px solid var(--border)':''}">
-          <div style="width:32px;height:32px;border-radius:10px;background:${step.done?'var(--green-dim)':'var(--bg3)'};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${step.icon}</div>
+          <div style="width:32px;height:32px;border-radius:10px;background:${step.done?'var(--green-dim)':'var(--bg3)'};display:flex;align-items:center;justify-content:center;font-size:14px;">${step.done?'✅':'⏳'}</div>
           <div style="font-size:13px;font-weight:600;color:${step.done?'var(--green)':'var(--text3)'};">${step.label}</div>
-          ${step.done?`<div style="margin-left:auto;font-size:11px;color:var(--green);font-family:'DM Mono',monospace;">✓ Done</div>`:''}
+          ${step.done?`<div style="margin-left:auto;font-size:11px;color:var(--green);font-family:\'DM Mono\',monospace;">✓ Done</div>`:''}
         </div>`).join('')}
-    </div>
-  `;
+    </div>`;
 }
 
 function renderHistory(){
   const list = document.getElementById('history-list');
-  const done = completedOrders;
 
-  document.getElementById('h-total-orders').textContent = done.length;
-  document.getElementById('h-total-earn').textContent   = 'RM '+totalEarnings.toFixed(0);
-  document.getElementById('h-today').textContent        = 'RM '+todayEarnings.toFixed(0);
-  document.getElementById('h-avg-earn').textContent     = done.length ? 'RM '+(totalEarnings/done.length).toFixed(2) : 'RM 0';
+  document.getElementById('h-total-orders').textContent = completedOrders.length;
+  document.getElementById('h-total-earn').textContent   = 'RM ' + totalEarnings.toFixed(2);
+  document.getElementById('h-today').textContent        = 'RM ' + todayEarnings.toFixed(2);
+  document.getElementById('h-avg-earn').textContent     = completedOrders.length
+    ? 'RM ' + (totalEarnings / completedOrders.length).toFixed(2) : 'RM 0';
 
-  if(done.length===0){
-    list.innerHTML=`<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No history yet</div><div class="empty-sub">Completed deliveries appear here</div></div>`;
+  if(completedOrders.length === 0){
+    list.innerHTML=`<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No deliveries yet</div><div class="empty-sub">Completed deliveries appear here<br>and are saved permanently ☁️</div></div>`;
     return;
   }
-  list.innerHTML = done.map((o,i)=>`
+
+  // Show most recent first
+  const sorted = [...completedOrders].reverse();
+  list.innerHTML = sorted.map((o,i)=>`
     <div class="history-item" style="animation-delay:${i*0.04}s">
       <div class="hi-icon">🛵</div>
       <div class="hi-info">
-        <div class="hi-name">${o.name}</div>
-        <div class="hi-meta">${o.code} · ${o.address||'Pickup'}</div>
+        <div class="hi-name">${o.name || 'Customer'}</div>
+        <div class="hi-meta">${o.code||'—'} · ${o.address||'Pickup'} · ${o.completedAt ? new Date(o.completedAt).toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'}) : ''}</div>
       </div>
-      <div class="hi-earn">+RM 3.00</div>
+      <div class="hi-earn">+RM ${EARN_PER_ORDER.toFixed(2)}</div>
     </div>`).join('');
 }
 
 function updateEarnings(){
-  document.getElementById('earn-today').textContent  = 'RM '+todayEarnings.toFixed(0);
+  document.getElementById('earn-today').textContent  = 'RM ' + todayEarnings.toFixed(0);
   document.getElementById('earn-orders').textContent = completedOrders.length;
 }
 
@@ -981,41 +1022,59 @@ async function acceptOrder(docId){
   if(myActive){ showToast('⚠️ Finish your current delivery first!'); return; }
   try {
     const order = allOrders.find(o => o.docId === docId);
-    // If not yet assigned to anyone, claim it
     if(order && order.status === 'ready'){
       await updateDoc(doc(db,'orders',docId), { status:'delivering', rider: riderName });
     }
-    // If boss already assigned to me (delivering), just pick it up locally
-    myActive = allOrders.find(o=>o.docId===docId);
-    if(myActive) myActive.status='delivering';
+    myActive = allOrders.find(o => o.docId === docId);
+    if(myActive) myActive.status = 'delivering';
     showToast('🛵 Order accepted! Go pick it up!');
     switchTab('active', document.getElementById('nav-active'));
-    renderAll();
+    renderActive();
+    renderAvailable();
   } catch(e){ showToast('❌ '+e.message); }
 }
 window.acceptOrder = acceptOrder;
 
 async function markPickedUp(docId){
-  // Update rider-side only (internal state), no Firestore change needed here
-  // Status stays 'delivering' — we just update local UI
   if(myActive) myActive._pickedUp = true;
-  showToast('📦 Picked up! Now deliver to customer 🛵');
+  showToast('📦 Picked up! Deliver to customer now 🛵');
   renderActive();
 }
 window.markPickedUp = markPickedUp;
 
 async function markDelivered(docId){
   try {
-    await updateDoc(doc(db,'orders',docId), { status:'done' });
     const o = myActive;
-    completedOrders.unshift(o);
-    todayEarnings  += 3.00;
-    totalEarnings  += 3.00;
+    const completedEntry = {
+      docId:       o.docId,
+      code:        o.code        || '—',
+      name:        o.name        || 'Customer',
+      address:     o.address     || 'MMU Campus',
+      total:       o.total       || 0,
+      earning:     EARN_PER_ORDER,
+      completedAt: new Date().toISOString(),
+    };
+
+    // 1. Update order status in Firestore
+    await updateDoc(doc(db,'orders',docId), { status:'done' });
+
+    // 2. Update rider doc in Firestore — permanently save earnings + history
+    await updateDoc(doc(db,'riders',riderId), {
+      totalEarnings:   increment(EARN_PER_ORDER),
+      totalOrders:     increment(1),
+      todayEarnings:   increment(EARN_PER_ORDER),
+      todayOrders:     increment(1),
+      todayDate:       new Date().toDateString(),
+      completedOrders: arrayUnion(completedEntry),  // append to array
+    });
+
     myActive = null;
-    showToast('🎉 Delivered! +RM 3.00 earned!');
-    renderAll();
+    showToast('🎉 Delivered! +RM '+EARN_PER_ORDER.toFixed(2)+' saved to your account!');
+    renderActive();
+    renderAvailable();
     switchTab('available', document.getElementById('nav-available'));
-  } catch(e){ showToast('❌ '+e.message); }
+    // renderHistory() and updateEarnings() will fire via listenToRiderDoc onSnapshot
+  } catch(e){ showToast('❌ '+e.message); console.error(e); }
 }
 window.markDelivered = markDelivered;
 
@@ -1026,14 +1085,10 @@ function switchTab(name, el){
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-btn,.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-
-  // Activate both top tab and bottom nav
   document.querySelectorAll('.tab-btn').forEach(b=>{
     if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+name+"'")) b.classList.add('active');
   });
   if(el) el.classList.add('active');
-
-  if(name==='history') renderHistory();
 }
 window.switchTab = switchTab;
 
@@ -1042,11 +1097,11 @@ window.switchTab = switchTab;
 // ═══════════════════════════════════════════
 let toastT;
 function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;
+  const t = document.getElementById('toast');
+  t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toastT);
-  toastT=setTimeout(()=>t.classList.remove('show'),3000);
+  toastT = setTimeout(()=>t.classList.remove('show'), 3500);
 }
 window.showToast = showToast;
 </script>
