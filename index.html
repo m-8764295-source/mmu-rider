@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Soy & Oden — Rider</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#0D0F0A;
+  --bg2:#131508;
+  --bg3:#1A1C10;
+  --card:#161810;
+  --border:#252810;
+  --border2:#303520;
+  --green:#7EC850;
+  --green2:#A8E070;
+  --green-dim:#1E3010;
+  --green-glow:rgba(126,200,80,0.12);
+  --amber:#E8B84A;
+  --amber-dim:#3D2E08;
+  --red:#F05A45;
+  --red-dim:#3D1810;
+  --blue:#5BA8D4;
+  --blue-dim:#0E2838;
+  --cream:#F0EAD8;
+  --cream2:#C8BEA8;
+  --text:#E8E4D8;
+  --text2:#9A9480;
+  --text3:#585040;
+  --shadow:0 8px 40px rgba(0,0,0,0.5);
+  --r:16px;
+  --r2:12px;
+}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  max-width:430px;
+  margin:0 auto;
+  overflow-x:hidden;
+  position:relative;
+}
+
+/* Ambient background */
+body::before{
+  content:'';
+  position:fixed;
+  top:-100px;left:-100px;
+  width:350px;height:350px;
+  background:radial-gradient(circle,rgba(126,200,80,0.06) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+/* ── LOGIN ── */
+#login-screen{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:32px 24px;
+  position:relative;
+  z-index:1;
+}
+
+.login-top{
+  text-align:center;
+  margin-bottom:40px;
+}
+
+.rider-logo{
+  width:72px;height:72px;
+  background:var(--green-dim);
+  border:1.5px solid var(--green-glow);
+  border-radius:24px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;
+  margin:0 auto 16px;
+  box-shadow:0 0 40px rgba(126,200,80,0.15);
+}
+
+.login-brand{
+  font-family:'Syne',sans-serif;
+  font-size:26px;
+  font-weight:800;
+  color:var(--cream);
+  letter-spacing:-.02em;
+}
+
+.login-brand span{color:var(--green);}
+
+.login-sub{
+  font-size:12px;
+  color:var(--text3);
+  margin-top:4px;
+  font-family:'DM Mono',monospace;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.login-card{
+  width:100%;
+  background:var(--card);
+  border:1px solid var(--border2);
+  border-radius:24px;
+  padding:28px 24px;
+}
+
+.field{margin-bottom:14px;}
+
+.field label{
+  display:block;
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--text3);
+  margin-bottom:6px;
+  font-family:'DM Mono',monospace;
+}
+
+.field input,.field select{
+  width:100%;
+  background:var(--bg3);
+  border:1.5px solid var(--border2);
+  border-radius:var(--r2);
+  padding:13px 16px;
+  font-family:'DM Sans',sans-serif;
+  font-size:15px;
+  color:var(--text);
+  outline:none;
+  transition:border-color .2s;
+  appearance:none;
+}
+.field input:focus,.field select:focus{border-color:var(--green);}
+.field input::placeholder{color:var(--text3);}
+.field select option{background:var(--bg3);}
+
+.login-btn{
+  width:100%;
+  background:var(--green);
+  color:var(--bg);
+  border:none;
+  border-radius:var(--r2);
+  padding:16px;
+  font-family:'Syne',sans-serif;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  margin-top:4px;
+  transition:all .15s;
+  box-shadow:0 6px 24px rgba(126,200,80,0.3);
+  letter-spacing:-.01em;
+}
+.login-btn:active{transform:scale(.98);background:var(--green2);}
+
+.login-err{
+  color:var(--red);font-size:12px;
+  text-align:center;margin-top:10px;display:none;
+}
+
+.login-hint{
+  text-align:center;margin-top:16px;
+  font-size:11px;color:var(--text3);
+  font-family:'DM Mono',monospace;
+}
+
+/* ── MAIN APP ── */
+#app{display:none;min-height:100vh;position:relative;z-index:1;}
+
+/* Status bar */
+.status-bar{
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  padding:14px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+
+.status-bar-left{display:flex;align-items:center;gap:10px;}
+
+.rider-greeting{
+  font-size:13px;font-weight:600;color:var(--cream);
+}
+.rider-greeting span{color:var(--green);}
+
+.online-toggle{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-radius:100px;
+  padding:6px 14px 6px 8px;
+  cursor:pointer;
+  transition:all .2s;
+}
+.online-toggle.online{
+  background:var(--green-dim);
+  border-color:rgba(126,200,80,0.3);
+}
+.toggle-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--text3);transition:background .2s;
+}
+.online-toggle.online .toggle-dot{background:var(--green);box-shadow:0 0 6px rgba(126,200,80,0.6);}
+.toggle-label{
+  font-size:11px;font-weight:700;
+  color:var(--text2);
+  font-family:'DM Mono',monospace;
+  transition:color .2s;
+}
+.online-toggle.online .toggle-label{color:var(--green);}
+
+/* Earnings strip */
+.earnings-strip{
+  background:linear-gradient(135deg,var(--green-dim),rgba(126,200,80,0.05));
+  border-bottom:1px solid rgba(126,200,80,0.15);
+  padding:12px 20px;
+  display:flex;gap:0;
+}
+.earn-item{
+  flex:1;text-align:center;
+  border-right:1px solid var(--border);
+}
+.earn-item:last-child{border-right:none;}
+.earn-val{
+  font-family:'Syne',sans-serif;
+  font-size:18px;font-weight:800;
+  color:var(--green);display:block;
+  letter-spacing:-.02em;
+}
+.earn-label{
+  font-size:9px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text3);font-family:'DM Mono',monospace;
+}
+
+/* Tabs */
+.tabs-bar{
+  display:flex;
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  padding:0 16px;
+}
+.tab-btn{
+  flex:1;padding:12px 8px;
+  font-size:12px;font-weight:700;
+  color:var(--text3);
+  border:none;background:transparent;
+  cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:all .2s;
+  font-family:'DM Sans',sans-serif;
+  letter-spacing:.02em;
+}
+.tab-btn.active{color:var(--green);border-bottom-color:var(--green);}
+
+/* Content */
+.tab-content{display:none;padding:16px;padding-bottom:100px;}
+.tab-content.active{display:block;}
+
+/* Order cards */
+.order-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  margin-bottom:12px;
+  overflow:hidden;
+  animation:slideUp .3s ease both;
+  transition:border-color .2s;
+}
+.order-card:active{border-color:var(--border2);}
+
+@keyframes slideUp{
+  from{opacity:0;transform:translateY(12px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+.order-card-header{
+  padding:16px 16px 12px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--border);
+}
+
+.order-num-badge{
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-radius:10px;
+  padding:6px 10px;
+  text-align:center;
+  flex-shrink:0;
+}
+.order-num-badge .num{
+  font-family:'Syne',sans-serif;
+  font-size:14px;font-weight:800;
+  color:var(--cream);display:block;
+}
+.order-num-badge .code{
+  font-size:9px;color:var(--text3);
+  font-family:'DM Mono',monospace;
+}
+
+.order-header-info{flex:1;}
+.order-customer-name{
+  font-size:15px;font-weight:700;color:var(--cream);margin-bottom:2px;
+}
+.order-meta-row{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.order-time{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;}
+
+.status-chip{
+  font-size:9px;font-weight:700;
+  padding:2px 8px;border-radius:100px;
+  font-family:'DM Mono',monospace;letter-spacing:.05em;
+}
+.chip-ready{background:var(--green-dim);color:var(--green2);}
+.chip-delivering{background:var(--blue-dim);color:var(--blue);}
+.chip-done{background:var(--bg3);color:var(--text3);}
+
+.order-total-badge{
+  font-family:'Syne',sans-serif;
+  font-size:16px;font-weight:800;
+  color:var(--green);
+}
+
+.order-card-body{padding:12px 16px;}
+
+.order-items-list{
+  font-size:13px;color:var(--text2);
+  line-height:1.8;margin-bottom:10px;
+}
+.order-items-list span{color:var(--text);font-weight:500;}
+
+.address-row{
+  display:flex;align-items:flex-start;gap:8px;
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-radius:10px;
+  padding:10px 12px;
+  margin-bottom:10px;
+}
+.address-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.address-text{font-size:12px;color:var(--cream2);line-height:1.5;}
+.address-label{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.06em;margin-bottom:2px;}
+
+.phone-row{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:var(--text2);margin-bottom:12px;
+}
+.phone-row a{color:var(--green);text-decoration:none;font-family:'DM Mono',monospace;}
+
+.action-row{display:flex;gap:8px;}
+
+.action-btn{
+  flex:1;border:none;border-radius:var(--r2);
+  padding:13px 12px;
+  font-family:'Syne',sans-serif;
+  font-size:13px;font-weight:700;
+  cursor:pointer;
+  transition:all .15s;
+  letter-spacing:-.01em;
+}
+.action-btn:active{transform:scale(.97);}
+
+.btn-accept{
+  background:var(--green);color:var(--bg);
+  box-shadow:0 4px 16px rgba(126,200,80,0.3);
+}
+.btn-accept:hover{background:var(--green2);}
+
+.btn-pickup{
+  background:var(--amber-dim);color:var(--amber);
+  border:1px solid rgba(232,184,74,0.2);
+}
+.btn-deliver{
+  background:var(--green-dim);color:var(--green);
+  border:1px solid rgba(126,200,80,0.2);
+}
+.btn-nav{
+  background:var(--blue-dim);color:var(--blue);
+  border:1px solid rgba(91,168,212,0.2);
+  flex:0 0 auto;padding:13px 14px;
+}
+
+/* Empty state */
+.empty-state{
+  text-align:center;padding:60px 20px;
+  color:var(--text3);
+}
+.empty-icon{font-size:48px;margin-bottom:14px;}
+.empty-title{font-size:16px;font-weight:700;color:var(--text2);margin-bottom:4px;font-family:'Syne',sans-serif;}
+.empty-sub{font-size:12px;line-height:1.6;}
+
+/* Offline banner */
+.offline-banner{
+  background:var(--red-dim);
+  border:1px solid rgba(240,90,69,0.2);
+  border-radius:var(--r2);
+  padding:14px 16px;
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:16px;
+}
+.offline-banner .ob-icon{font-size:18px;}
+.offline-banner .ob-text{font-size:13px;color:var(--red);font-weight:600;}
+
+/* Active delivery card */
+.active-delivery{
+  background:linear-gradient(135deg,var(--green-dim),rgba(126,200,80,0.05));
+  border:1.5px solid rgba(126,200,80,0.25);
+  border-radius:var(--r);
+  padding:20px;
+  margin-bottom:16px;
+  animation:slideUp .3s ease;
+}
+.active-label{
+  font-size:10px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--green);
+  font-family:'DM Mono',monospace;margin-bottom:12px;
+  display:flex;align-items:center;gap:6px;
+}
+.active-pulse{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--green);
+  animation:pulse 1.5s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
+
+/* Stats tab */
+.stats-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:10px;margin-bottom:16px;
+}
+.stat-box{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px;
+  animation:slideUp .3s ease both;
+}
+.stat-box .sv{
+  font-family:'Syne',sans-serif;
+  font-size:24px;font-weight:800;
+  color:var(--green);display:block;margin-bottom:2px;
+}
+.stat-box .sl{
+  font-size:10px;color:var(--text3);
+  font-family:'DM Mono',monospace;
+  letter-spacing:.08em;text-transform:uppercase;
+}
+
+/* Bottom nav */
+.bottom-nav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:430px;
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  display:flex;
+  padding:8px 0 20px;
+  z-index:100;
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;gap:3px;
+  padding:6px 0;cursor:pointer;
+  border:none;background:transparent;
+  transition:all .15s;
+}
+.nav-btn .ni{font-size:20px;}
+.nav-btn .nl{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);font-family:'DM Mono',monospace;}
+.nav-btn.active .nl{color:var(--green);}
+.nav-btn.active .ni{filter:drop-shadow(0 0 6px rgba(126,200,80,0.6));}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:88px;left:50%;transform:translateX(-50%);
+  background:var(--bg3);border:1px solid var(--border2);
+  border-radius:var(--r2);padding:12px 20px;
+  font-size:13px;font-weight:600;color:var(--cream);
+  box-shadow:var(--shadow);z-index:999;
+  white-space:nowrap;
+  opacity:0;transform:translateX(-50%) translateY(8px);
+  transition:all .25s ease;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Notification dot */
+.nav-dot{
+  position:absolute;top:4px;right:calc(50% - 22px);
+  width:7px;height:7px;border-radius:50%;
+  background:var(--red);border:1.5px solid var(--bg2);
+  display:none;
+}
+
+/* History item */
+.history-item{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 16px;
+  margin-bottom:8px;
+  display:flex;align-items:center;gap:12px;
+  animation:slideUp .25s ease both;
+}
+.hi-icon{
+  width:40px;height:40px;border-radius:12px;
+  background:var(--green-dim);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.hi-info{flex:1;}
+.hi-name{font-size:13px;font-weight:600;color:var(--cream);margin-bottom:2px;}
+.hi-meta{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;}
+.hi-earn{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--green);}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="login-screen">
+  <div class="login-top">
+    <div class="rider-logo">🛵</div>
+    <div class="login-brand">Soy <span>&</span> Oden</div>
+    <div class="login-sub">Rider Portal</div>
+  </div>
+
+  <div class="login-card">
+    <div class="field">
+      <label>Your Name</label>
+      <select id="rider-select">
+        <option value="">— Select your name —</option>
+        <option value="Ahmad Hafiz">Ahmad Hafiz</option>
+        <option value="Nurul Ain">Nurul Ain</option>
+        <option value="Rizwan Akmal">Rizwan Akmal</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Rider PIN</label>
+      <input type="password" id="rider-pin" placeholder="Enter PIN" maxlength="4">
+    </div>
+    <button class="login-btn" onclick="doRiderLogin()">Start Riding 🛵</button>
+    <div class="login-err" id="rider-err">❌ Wrong PIN. Try 1234</div>
+    <div class="login-hint">Default PIN: 1234</div>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN APP ═══════════════ -->
+<div id="app">
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="status-bar-left">
+      <div class="rider-logo" style="width:32px;height:32px;border-radius:10px;font-size:16px;margin:0;">🛵</div>
+      <div class="rider-greeting">Hey, <span id="rider-name-display">Rider</span></div>
+    </div>
+    <div class="online-toggle" id="online-toggle" onclick="toggleOnline()">
+      <div class="toggle-dot"></div>
+      <span class="toggle-label">OFFLINE</span>
+    </div>
+  </div>
+
+  <!-- Earnings strip -->
+  <div class="earnings-strip">
+    <div class="earn-item">
+      <span class="earn-val" id="earn-today">RM 0</span>
+      <span class="earn-label">Today</span>
+    </div>
+    <div class="earn-item">
+      <span class="earn-val" id="earn-orders">0</span>
+      <span class="earn-label">Deliveries</span>
+    </div>
+    <div class="earn-item">
+      <span class="earn-val" id="earn-rate">RM 3</span>
+      <span class="earn-label">Per Order</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-bar">
+    <button class="tab-btn active" onclick="switchTab('available',this)">
+      Available <span id="avail-count"></span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('active',this)">Active</button>
+    <button class="tab-btn" onclick="switchTab('history',this)">History</button>
+  </div>
+
+  <!-- ── Available Orders ── -->
+  <div class="tab-content active" id="tab-available">
+    <div class="offline-banner" id="offline-banner">
+      <span class="ob-icon">🔴</span>
+      <span class="ob-text">You're offline — toggle Online to receive orders</span>
+    </div>
+    <div id="available-list">
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">No orders yet</div>
+        <div class="empty-sub">Go online and wait for<br>delivery orders to appear here</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Active Delivery ── -->
+  <div class="tab-content" id="tab-active">
+    <div id="active-delivery-wrap">
+      <div class="empty-state">
+        <div class="empty-icon">🛵</div>
+        <div class="empty-title">No active delivery</div>
+        <div class="empty-sub">Accept an order from the<br>Available tab to start riding</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── History ── -->
+  <div class="tab-content" id="tab-history">
+    <div class="stats-grid">
+      <div class="stat-box" style="animation-delay:.05s">
+        <span class="sv" id="h-total-earn">RM 0</span>
+        <span class="sl">Total Earned</span>
+      </div>
+      <div class="stat-box" style="animation-delay:.1s">
+        <span class="sv" id="h-total-orders">0</span>
+        <span class="sl">Total Deliveries</span>
+      </div>
+      <div class="stat-box" style="animation-delay:.15s">
+        <span class="sv" id="h-today">RM 0</span>
+        <span class="sl">Today</span>
+      </div>
+      <div class="stat-box" style="animation-delay:.2s">
+        <span class="sv" id="h-avg-earn">RM 0</span>
+        <span class="sl">Avg Per Order</span>
+      </div>
+    </div>
+    <div id="history-list">
+      <div class="empty-state">
+        <div class="empty-icon">📊</div>
+        <div class="empty-title">No deliveries yet</div>
+        <div class="empty-sub">Completed orders appear here</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="switchTab('available',this)" id="nav-available">
+      <span class="ni">📦</span>
+      <span class="nl">Orders</span>
+      <div class="nav-dot" id="new-order-dot"></div>
+    </button>
+    <button class="nav-btn" onclick="switchTab('active',this)" id="nav-active">
+      <span class="ni">🛵</span>
+      <span class="nl">Active</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('history',this)" id="nav-history">
+      <span class="ni">📊</span>
+      <span class="nl">History</span>
+    </button>
+    <button class="nav-btn" onclick="doLogout()" id="nav-logout">
+      <span class="ni">👤</span>
+      <span class="nl">Logout</span>
+    </button>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Toast -->
+<div class="toast" id="toast">✅ Done</div>
+
+<script type="module">
+// ═══════════════════════════════════════════
+//  FIREBASE
+// ═══════════════════════════════════════════
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, onSnapshot, updateDoc, query, where, orderBy }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCkFmMpScduIj1493VWQdDCOAaTUWnWEbk",
+  authDomain: "mmu-delivery-a4919.firebaseapp.com",
+  projectId: "mmu-delivery-a4919",
+  storageBucket: "mmu-delivery-a4919.firebasestorage.app",
+  messagingSenderId: "945529333130",
+  appId: "1:945529333130:web:915bfd830b44de4e19d473"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+const RIDER_PIN = '1234';
+let riderName   = '';
+let isOnline    = false;
+let allOrders   = [];        // all orders from Firestore
+let myActive    = null;      // current active delivery doc
+let completedOrders = [];    // rider's completed
+let todayEarnings = 0;
+let totalEarnings = 0;
+let unsubscribeOrders = null;
+
+// ═══════════════════════════════════════════
+//  LOGIN
+// ═══════════════════════════════════════════
+function doRiderLogin(){
+  const name = document.getElementById('rider-select').value;
+  const pin  = document.getElementById('rider-pin').value;
+  const err  = document.getElementById('rider-err');
+  if(!name){ err.textContent='⚠️ Please select your name'; err.style.display='block'; return; }
+  if(pin !== RIDER_PIN){ err.style.display='block'; setTimeout(()=>err.style.display='none',3000); return; }
+
+  riderName = name;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('rider-name-display').textContent = name.split(' ')[0];
+  initRiderApp();
+}
+window.doRiderLogin = doRiderLogin;
+document.addEventListener('keydown',e=>{ if(e.key==='Enter') doRiderLogin(); });
+
+function doLogout(){
+  if(myActive){ showToast('⚠️ Finish your active delivery first!'); return; }
+  if(unsubscribeOrders) unsubscribeOrders();
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  isOnline=false; allOrders=[]; myActive=null; completedOrders=[];
+  todayEarnings=0; totalEarnings=0;
+  document.getElementById('rider-select').value='';
+  document.getElementById('rider-pin').value='';
+}
+window.doLogout = doLogout;
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+function initRiderApp(){
+  // Listen to ALL orders in realtime
+  const q = query(collection(db,'orders'), orderBy('timestamp','desc'));
+  unsubscribeOrders = onSnapshot(q, snap => {
+    allOrders = [];
+    snap.forEach(d => allOrders.push({ docId:d.id, ...d.data(), time: d.data().timestamp?.toDate() || new Date() }));
+
+    // Auto-detect if boss assigned an order to me
+    if(!myActive){
+      const assignedToMe = allOrders.find(o =>
+        o.status === 'delivering' &&
+        o.rider === riderName &&
+        o.type === 'delivery'
+      );
+      if(assignedToMe){
+        myActive = assignedToMe;
+        showToast('\uD83D\uDD14 Boss assigned you an order! Check Active tab');
+        switchTab('active', document.getElementById('nav-active'));
+      }
+    }
+
+    // Keep myActive in sync
+    if(myActive){
+      const updated = allOrders.find(o => o.docId === myActive.docId);
+      if(updated) myActive = updated;
+    }
+
+    renderAll();
+  });
+}
+
+// ═══════════════════════════════════════════
+//  ONLINE TOGGLE
+// ═══════════════════════════════════════════
+function toggleOnline(){
+  if(myActive){ showToast('Finish your active delivery first!'); return; }
+  isOnline = !isOnline;
+  const tog = document.getElementById('online-toggle');
+  const lbl = tog.querySelector('.toggle-label');
+  if(isOnline){
+    tog.classList.add('online');
+    lbl.textContent='ONLINE';
+    showToast('🟢 You are now Online!');
+  } else {
+    tog.classList.remove('online');
+    lbl.textContent='OFFLINE';
+    showToast('🔴 You are now Offline');
+  }
+  document.getElementById('offline-banner').style.display = isOnline ? 'none' : 'flex';
+  renderAll();
+}
+window.toggleOnline = toggleOnline;
+
+// ═══════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════
+function renderAll(){
+  renderAvailable();
+  renderActive();
+  renderHistory();
+  updateEarnings();
+}
+
+function timeAgo(date){
+  if(!date) return '';
+  const d = Math.floor((new Date()-date)/1000);
+  if(d<60) return d+'s ago';
+  if(d<3600) return Math.floor(d/60)+'m ago';
+  return Math.floor(d/3600)+'h ago';
+}
+
+// Available = status 'ready' + type 'delivery' + not assigned to someone else
+function renderAvailable(){
+  const list = document.getElementById('available-list');
+
+  if(!isOnline){
+    document.getElementById('offline-banner').style.display='flex';
+    list.innerHTML=`<div class="empty-state"><div class="empty-icon">🔴</div><div class="empty-title">You're Offline</div><div class="empty-sub">Toggle Online above to see available orders</div></div>`;
+    document.getElementById('avail-count').textContent='';
+    document.getElementById('new-order-dot').style.display='none';
+    return;
+  }
+  document.getElementById('offline-banner').style.display='none';
+
+  // Ready delivery orders not yet assigned, or assigned to me
+  // Show: unassigned ready orders OR orders boss assigned to me
+  const available = allOrders.filter(o =>
+    o.type === 'delivery' && !myActive && (
+      (o.status === 'ready' && !o.rider) ||
+      (o.status === 'ready' && o.rider === riderName)
+    )
+  );
+
+  const count = available.length;
+  document.getElementById('avail-count').textContent = count > 0 ? `(${count})` : '';
+  document.getElementById('new-order-dot').style.display = count > 0 ? 'block' : 'none';
+
+  if(count === 0){
+    list.innerHTML=`<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">All clear!</div><div class="empty-sub">No available delivery orders right now.<br>Stay online and wait 🛵</div></div>`;
+    return;
+  }
+
+  list.innerHTML = available.map((o,i)=>`
+    <div class="order-card" style="animation-delay:${i*0.05}s">
+      <div class="order-card-header">
+        <div class="order-num-badge">
+          <span class="num">#${(o.code||'').slice(-3)||i+1}</span>
+          <span class="code">${o.code||'—'}</span>
+        </div>
+        <div class="order-header-info">
+          <div class="order-customer-name">${o.name}</div>
+          <div class="order-meta-row">
+            <span class="order-time">⏱ ${timeAgo(o.time)}</span>
+            <span class="status-chip chip-ready">🟢 READY</span>
+          </div>
+        </div>
+        <div class="order-total-badge">RM ${(o.total||0).toFixed(2)}</div>
+      </div>
+      <div class="order-card-body">
+        <div class="order-items-list">
+          ${(o.items||[]).map(it=>`<span>${it.emoji} ${it.name}</span> ×${it.qty}<br>`).join('')}
+        </div>
+        <div class="address-row">
+          <span class="address-icon">📍</span>
+          <div>
+            <div class="address-label">Deliver to</div>
+            <div class="address-text">${o.address || 'MMU Campus'}</div>
+          </div>
+        </div>
+        <div class="phone-row">
+          📞 <a href="tel:${o.phone}">${o.phone}</a>
+        </div>
+        <div class="action-row">
+          <button class="action-btn btn-accept" onclick="acceptOrder('${o.docId}')">🛵 Accept Order · +RM 3.00</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderActive(){
+  const wrap = document.getElementById('active-delivery-wrap');
+  if(!myActive){
+    wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">🛵</div><div class="empty-title">No active delivery</div><div class="empty-sub">Accept an order to start riding</div></div>`;
+    return;
+  }
+  const o = myActive;
+  wrap.innerHTML=`
+    <div class="active-delivery">
+      <div class="active-label"><div class="active-pulse"></div>ACTIVE DELIVERY</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--cream);">${o.name}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px;">${o.code}</div>
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--green);">RM ${(o.total||0).toFixed(2)}</div>
+      </div>
+
+      <div class="address-row" style="margin-bottom:10px;">
+        <span class="address-icon">📦</span>
+        <div>
+          <div class="address-label">Pick up at</div>
+          <div class="address-text">Soy & Oden Stall — MMU Cafeteria</div>
+        </div>
+      </div>
+
+      <div class="address-row" style="margin-bottom:10px;">
+        <span class="address-icon">📍</span>
+        <div>
+          <div class="address-label">Deliver to</div>
+          <div class="address-text">${o.address || 'MMU Campus'}</div>
+        </div>
+      </div>
+
+      <div class="phone-row">
+        📞 Customer: <a href="tel:${o.phone}" style="color:var(--green);font-family:'DM Mono',monospace;">${o.phone}</a>
+      </div>
+
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.08em;margin-bottom:6px;">ORDER ITEMS</div>
+        ${(o.items||[]).map(it=>`<div style="font-size:13px;color:var(--text);margin-bottom:2px;">${it.emoji} ${it.name} ×${it.qty} <span style="color:var(--text3);font-size:11px;">${it.custom}</span></div>`).join('')}
+      </div>
+
+      <div class="action-row" style="gap:8px;">
+        <a class="action-btn btn-nav" href="https://maps.google.com?q=${encodeURIComponent(o.address||'MMU Cyberjaya')}" target="_blank" style="text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px;">
+          🗺 Maps
+        </a>
+        ${o.status==='delivering'
+          ? `<button class="action-btn btn-deliver" onclick="markDelivered('${o.docId}')">✅ Mark as Delivered</button>`
+          : `<button class="action-btn btn-pickup" onclick="markPickedUp('${o.docId}')">📦 Picked Up from Stall</button>`
+        }
+      </div>
+    </div>
+
+    <!-- Steps progress -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:14px;">Delivery Progress</div>
+      ${[
+        {key:'accepted', icon:'✅', label:'Order Accepted',   done: true},
+        {key:'pickup',   icon:'📦', label:'Picked Up at Stall', done: o.status==='delivering'||o.status==='done'},
+        {key:'deliver',  icon:'🏠', label:'Delivered to Customer', done: o.status==='done'},
+      ].map((step,i)=>`
+        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i<2?'border-bottom:1px solid var(--border)':''}">
+          <div style="width:32px;height:32px;border-radius:10px;background:${step.done?'var(--green-dim)':'var(--bg3)'};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${step.icon}</div>
+          <div style="font-size:13px;font-weight:600;color:${step.done?'var(--green)':'var(--text3)'};">${step.label}</div>
+          ${step.done?`<div style="margin-left:auto;font-size:11px;color:var(--green);font-family:'DM Mono',monospace;">✓ Done</div>`:''}
+        </div>`).join('')}
+    </div>
+  `;
+}
+
+function renderHistory(){
+  const list = document.getElementById('history-list');
+  const done = completedOrders;
+
+  document.getElementById('h-total-orders').textContent = done.length;
+  document.getElementById('h-total-earn').textContent   = 'RM '+totalEarnings.toFixed(0);
+  document.getElementById('h-today').textContent        = 'RM '+todayEarnings.toFixed(0);
+  document.getElementById('h-avg-earn').textContent     = done.length ? 'RM '+(totalEarnings/done.length).toFixed(2) : 'RM 0';
+
+  if(done.length===0){
+    list.innerHTML=`<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No history yet</div><div class="empty-sub">Completed deliveries appear here</div></div>`;
+    return;
+  }
+  list.innerHTML = done.map((o,i)=>`
+    <div class="history-item" style="animation-delay:${i*0.04}s">
+      <div class="hi-icon">🛵</div>
+      <div class="hi-info">
+        <div class="hi-name">${o.name}</div>
+        <div class="hi-meta">${o.code} · ${o.address||'Pickup'}</div>
+      </div>
+      <div class="hi-earn">+RM 3.00</div>
+    </div>`).join('');
+}
+
+function updateEarnings(){
+  document.getElementById('earn-today').textContent  = 'RM '+todayEarnings.toFixed(0);
+  document.getElementById('earn-orders').textContent = completedOrders.length;
+}
+
+// ═══════════════════════════════════════════
+//  ORDER ACTIONS
+// ═══════════════════════════════════════════
+async function acceptOrder(docId){
+  if(myActive){ showToast('⚠️ Finish your current delivery first!'); return; }
+  try {
+    const order = allOrders.find(o => o.docId === docId);
+    // If not yet assigned to anyone, claim it
+    if(order && order.status === 'ready'){
+      await updateDoc(doc(db,'orders',docId), { status:'delivering', rider: riderName });
+    }
+    // If boss already assigned to me (delivering), just pick it up locally
+    myActive = allOrders.find(o=>o.docId===docId);
+    if(myActive) myActive.status='delivering';
+    showToast('🛵 Order accepted! Go pick it up!');
+    switchTab('active', document.getElementById('nav-active'));
+    renderAll();
+  } catch(e){ showToast('❌ '+e.message); }
+}
+window.acceptOrder = acceptOrder;
+
+async function markPickedUp(docId){
+  // Update rider-side only (internal state), no Firestore change needed here
+  // Status stays 'delivering' — we just update local UI
+  if(myActive) myActive._pickedUp = true;
+  showToast('📦 Picked up! Now deliver to customer 🛵');
+  renderActive();
+}
+window.markPickedUp = markPickedUp;
+
+async function markDelivered(docId){
+  try {
+    await updateDoc(doc(db,'orders',docId), { status:'done' });
+    const o = myActive;
+    completedOrders.unshift(o);
+    todayEarnings  += 3.00;
+    totalEarnings  += 3.00;
+    myActive = null;
+    showToast('🎉 Delivered! +RM 3.00 earned!');
+    renderAll();
+    switchTab('available', document.getElementById('nav-available'));
+  } catch(e){ showToast('❌ '+e.message); }
+}
+window.markDelivered = markDelivered;
+
+// ═══════════════════════════════════════════
+//  TAB NAVIGATION
+// ═══════════════════════════════════════════
+function switchTab(name, el){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn,.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+
+  // Activate both top tab and bottom nav
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+name+"'")) b.classList.add('active');
+  });
+  if(el) el.classList.add('active');
+
+  if(name==='history') renderHistory();
+}
+window.switchTab = switchTab;
+
+// ═══════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════
+let toastT;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>t.classList.remove('show'),3000);
+}
+window.showToast = showToast;
+</script>
+</body>
+</html>
