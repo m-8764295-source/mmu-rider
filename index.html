@@ -3,610 +3,1446 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Soy & Oden — Rider</title>
+<title>MIDI — Rider Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
 :root{
-  --bg:#0D0F0A;
-  --bg2:#131508;
-  --bg3:#1A1C10;
-  --card:#161810;
-  --border:#252810;
-  --border2:#303520;
-  --green:#7EC850;
-  --green2:#A8E070;
-  --green-dim:#1E3010;
-  --green-glow:rgba(126,200,80,0.12);
-  --amber:#E8B84A;
-  --amber-dim:#3D2E08;
-  --red:#F05A45;
-  --red-dim:#3D1810;
-  --blue:#5BA8D4;
-  --blue-dim:#0E2838;
-  --cream:#F0EAD8;
-  --cream2:#C8BEA8;
-  --text:#E8E4D8;
-  --text2:#9A9480;
-  --text3:#585040;
-  --shadow:0 8px 40px rgba(0,0,0,0.5);
-  --r:16px;
-  --r2:12px;
+  /* Colors */
+  --yellow:    #F7E96C;
+  --yellow-dk: #E8D44A;
+  --yellow-lt: #FFFBE8;
+  --yellow-dim:rgba(247,233,108,0.15);
+  --teal:      #0ABAB5;
+  --teal-lt:   #E6F9F8;
+  --teal-dim:  rgba(10,186,181,0.12);
+  --bg:        #F4F5F7;
+  --bg2:       #FFFFFF;
+  --bg3:       #ECEEF2;
+  --card:      #FFFFFF;
+  --border:    rgba(0,0,0,0.07);
+  --border2:   rgba(0,0,0,0.12);
+  --text:      #1A1A1A;
+  --text2:     #555B6B;
+  --text3:     #9AA0B0;
+  --green:     #16A34A;
+  --green-lt:  #DCFCE7;
+  --orange:    #EA580C;
+  --orange-lt: #FFF0E6;
+  --blue:      #2563EB;
+  --blue-lt:   #EFF6FF;
+  --red:       #DC2626;
+  --red-lt:    #FEF2F2;
+
+  /* Spacing */
+  --r:   20px;
+  --r2:  14px;
+  --r3:  10px;
+  --r-full: 100px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  --shadow:    0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.08), 0 16px 48px rgba(0,0,0,0.08);
+  --shadow-yellow: 0 4px 20px rgba(247,233,108,0.5);
+  --shadow-teal:   0 4px 20px rgba(10,186,181,0.35);
 }
 
 body{
-  font-family:'DM Sans',sans-serif;
+  font-family:'Inter',sans-serif;
   background:var(--bg);
   color:var(--text);
-  min-height:100vh;
+  min-height:100vh;min-height:100dvh;
   max-width:430px;
   margin:0 auto;
   overflow-x:hidden;
-  position:relative;
+  -webkit-font-smoothing:antialiased;
 }
 
-/* Ambient background */
-body::before{
-  content:'';
-  position:fixed;
-  top:-100px;left:-100px;
-  width:350px;height:350px;
-  background:radial-gradient(circle,rgba(126,200,80,0.06) 0%,transparent 70%);
-  pointer-events:none;z-index:0;
+/* ═══════════════════════════════════════
+   SPLASH SCREEN (keep dark for brand)
+═══════════════════════════════════════ */
+#splash-screen{
+  position:fixed;inset:0;z-index:999;
+  background:#0D1826;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
 }
+@keyframes splashIconIn{0%{opacity:0;transform:scale(0.7);}65%{opacity:1;transform:scale(1.05);}100%{opacity:1;transform:scale(1);}}
+@keyframes splashWordIn{0%{opacity:0;transform:translateY(14px);}100%{opacity:1;transform:translateY(0);}}
+@keyframes railShoot{0%{transform:scaleX(0);transform-origin:right;opacity:0;}100%{transform:scaleX(1);transform-origin:right;opacity:1;}}
+@keyframes arrowIn{0%{opacity:0;transform:translateX(-16px);}100%{opacity:1;transform:translateX(0);}}
+@keyframes mmuIn{0%{opacity:0;transform:translateX(-10px);}100%{opacity:1;transform:translateX(0);}}
+@keyframes tagIn{0%{opacity:0;}100%{opacity:1;}}
+@keyframes splashFadeOut{0%{opacity:1;}100%{opacity:0;pointer-events:none;}}
+.sp-icon {animation:splashIconIn  0.55s cubic-bezier(.34,1.56,.64,1) 0.1s  both;}
+.sp-word {animation:splashWordIn  0.45s ease                         0.7s  both;}
+.sp-rail {animation:railShoot     0.4s  cubic-bezier(.4,0,.2,1)      1.15s both;}
+.sp-arrow{animation:arrowIn       0.25s ease                         1.55s both;}
+.sp-mmu  {animation:mmuIn         0.4s  ease                         1.6s  both;}
+.sp-tag  {animation:tagIn         0.5s  ease                         2.1s  both;}
+.sp-out  {animation:splashFadeOut 0.5s  ease                         2.8s  both;animation-fill-mode:forwards;}
 
-/* ── LOGIN ── */
+/* ═══════════════════════════════════════
+   LOGIN
+═══════════════════════════════════════ */
 #login-screen{
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding:32px 24px;
-  position:relative;
-  z-index:1;
+  min-height:100vh;min-height:100dvh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:40px 24px 60px;
+  background:var(--bg);
 }
-
-.login-top{
-  text-align:center;
-  margin-bottom:40px;
-}
-
-.rider-logo{
-  width:72px;height:72px;
-  background:var(--green-dim);
-  border:1.5px solid var(--green-glow);
-  border-radius:24px;
+.login-midi-icon{
+  width:88px;height:88px;border-radius:24px;
+  background:#1B3FA0;
   display:flex;align-items:center;justify-content:center;
-  font-size:32px;
-  margin:0 auto 16px;
-  box-shadow:0 0 40px rgba(126,200,80,0.15);
+  box-shadow:0 12px 40px rgba(27,63,160,0.25);
+  margin-bottom:16px;
 }
-
-.login-brand{
-  font-family:'Syne',sans-serif;
-  font-size:26px;
-  font-weight:800;
-  color:var(--cream);
-  letter-spacing:-.02em;
+.login-midi-word{
+  font-size:36px;font-weight:800;
+  color:#1A1A1A;letter-spacing:8px;line-height:1;margin-bottom:4px;
 }
-
-.login-brand span{color:var(--green);}
-
-.login-sub{
-  font-size:12px;
-  color:var(--text3);
-  margin-top:4px;
-  font-family:'DM Mono',monospace;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+.login-midi-sub{
+  font-size:11px;font-weight:600;color:var(--text3);
+  letter-spacing:0.2em;text-transform:uppercase;margin-bottom:32px;
 }
-
 .login-card{
-  width:100%;
-  background:var(--card);
-  border:1px solid var(--border2);
-  border-radius:24px;
-  padding:28px 24px;
+  width:100%;background:var(--card);
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:28px 24px;box-shadow:var(--shadow-lg);
+}
+.login-card-title{
+  font-size:16px;font-weight:700;color:var(--text);
+  margin-bottom:20px;letter-spacing:-0.01em;
 }
 
-.field{margin-bottom:14px;}
-
+/* Fields */
+.field{margin-bottom:16px;}
 .field label{
-  display:block;
-  font-size:10px;
-  font-weight:600;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  color:var(--text3);
-  margin-bottom:6px;
-  font-family:'DM Mono',monospace;
+  font-size:11px;font-weight:600;color:var(--text3);
+  letter-spacing:0.08em;text-transform:uppercase;
+  display:block;margin-bottom:8px;
 }
-
 .field input,.field select{
-  width:100%;
-  background:var(--bg3);
-  border:1.5px solid var(--border2);
-  border-radius:var(--r2);
-  padding:13px 16px;
-  font-family:'DM Sans',sans-serif;
-  font-size:15px;
-  color:var(--text);
-  outline:none;
-  transition:border-color .2s;
-  appearance:none;
+  width:100%;background:var(--bg);border:1.5px solid var(--border2);
+  border-radius:var(--r2);padding:14px 16px;
+  font-family:'Inter',sans-serif;font-size:15px;font-weight:500;
+  color:var(--text);outline:none;transition:all .2s;
 }
-.field input:focus,.field select:focus{border-color:var(--green);}
+.field input:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px var(--teal-dim);}
 .field input::placeholder{color:var(--text3);}
-.field select option{background:var(--bg3);}
 
+/* Login button */
 .login-btn{
-  width:100%;
-  background:var(--green);
-  color:var(--bg);
-  border:none;
-  border-radius:var(--r2);
-  padding:16px;
-  font-family:'Syne',sans-serif;
-  font-size:16px;
-  font-weight:700;
-  cursor:pointer;
-  margin-top:4px;
-  transition:all .15s;
-  box-shadow:0 6px 24px rgba(126,200,80,0.3);
-  letter-spacing:-.01em;
+  width:100%;background:var(--yellow);color:#1A1A1A;
+  border:none;border-radius:var(--r2);padding:16px;
+  font-family:'Inter',sans-serif;font-size:15px;font-weight:700;
+  cursor:pointer;margin-top:8px;
+  box-shadow:var(--shadow-yellow);
+  transition:all .15s;letter-spacing:-0.01em;
 }
-.login-btn:active{transform:scale(.98);background:var(--green2);}
+.login-btn:active{transform:scale(.97);box-shadow:none;}
+.login-err{font-size:13px;color:var(--red);text-align:center;margin-top:10px;display:none;}
 
-.login-err{
-  color:var(--red);font-size:12px;
-  text-align:center;margin-top:10px;display:none;
+/* Vehicle chips */
+.vehicle-chips{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.v-chip{
+  background:var(--bg);border:1.5px solid var(--border2);
+  border-radius:var(--r2);padding:12px 6px;text-align:center;
+  cursor:pointer;transition:all .15s;
 }
+.v-chip.selected{border-color:var(--teal);background:var(--teal-lt);}
+.v-chip-icon{font-size:22px;display:block;margin-bottom:4px;}
+.v-chip-label{font-size:11px;font-weight:600;color:var(--text2);}
+.v-chip.selected .v-chip-label{color:var(--teal);}
 
-.login-hint{
-  text-align:center;margin-top:16px;
-  font-size:11px;color:var(--text3);
-  font-family:'DM Mono',monospace;
-}
-
-/* ── MAIN APP ── */
-#app{display:none;min-height:100vh;position:relative;z-index:1;}
-
-/* Status bar */
-.status-bar{
-  background:var(--bg2);
-  border-bottom:1px solid var(--border);
-  padding:14px 20px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  position:sticky;top:0;z-index:50;
-}
-
-.status-bar-left{display:flex;align-items:center;gap:10px;}
-
-.rider-greeting{
-  font-size:13px;font-weight:600;color:var(--cream);
-}
-.rider-greeting span{color:var(--green);}
-
-.online-toggle{
-  display:flex;align-items:center;gap:8px;
-  background:var(--bg3);
-  border:1px solid var(--border2);
-  border-radius:100px;
-  padding:6px 14px 6px 8px;
-  cursor:pointer;
-  transition:all .2s;
-}
-.online-toggle.online{
-  background:var(--green-dim);
-  border-color:rgba(126,200,80,0.3);
-}
-.toggle-dot{
-  width:8px;height:8px;border-radius:50%;
-  background:var(--text3);transition:background .2s;
-}
-.online-toggle.online .toggle-dot{background:var(--green);box-shadow:0 0 6px rgba(126,200,80,0.6);}
-.toggle-label{
-  font-size:11px;font-weight:700;
-  color:var(--text2);
-  font-family:'DM Mono',monospace;
-  transition:color .2s;
-}
-.online-toggle.online .toggle-label{color:var(--green);}
-
-/* Earnings strip */
-.earnings-strip{
-  background:linear-gradient(135deg,var(--green-dim),rgba(126,200,80,0.05));
-  border-bottom:1px solid rgba(126,200,80,0.15);
-  padding:12px 20px;
-  display:flex;gap:0;
-}
-.earn-item{
-  flex:1;text-align:center;
-  border-right:1px solid var(--border);
-}
-.earn-item:last-child{border-right:none;}
-.earn-val{
-  font-family:'Syne',sans-serif;
-  font-size:18px;font-weight:800;
-  color:var(--green);display:block;
-  letter-spacing:-.02em;
-}
-.earn-label{
-  font-size:9px;font-weight:600;
-  letter-spacing:.1em;text-transform:uppercase;
-  color:var(--text3);font-family:'DM Mono',monospace;
-}
-
-/* Tabs */
-.tabs-bar{
-  display:flex;
-  background:var(--bg2);
-  border-bottom:1px solid var(--border);
-  padding:0 16px;
-}
-.tab-btn{
-  flex:1;padding:12px 8px;
-  font-size:12px;font-weight:700;
-  color:var(--text3);
-  border:none;background:transparent;
-  cursor:pointer;
-  border-bottom:2px solid transparent;
-  transition:all .2s;
-  font-family:'DM Sans',sans-serif;
-  letter-spacing:.02em;
-}
-.tab-btn.active{color:var(--green);border-bottom-color:var(--green);}
-
-/* Content */
-.tab-content{display:none;padding:16px;padding-bottom:100px;}
-.tab-content.active{display:block;}
-
-/* Order cards */
-.order-card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--r);
-  margin-bottom:12px;
-  overflow:hidden;
-  animation:slideUp .3s ease both;
-  transition:border-color .2s;
-}
-.order-card:active{border-color:var(--border2);}
-
-@keyframes slideUp{
-  from{opacity:0;transform:translateY(12px);}
-  to{opacity:1;transform:translateY(0);}
-}
-
-.order-card-header{
-  padding:16px 16px 12px;
-  display:flex;align-items:center;gap:12px;
-  border-bottom:1px solid var(--border);
-}
-
-.order-num-badge{
-  background:var(--bg3);
-  border:1px solid var(--border2);
-  border-radius:10px;
-  padding:6px 10px;
-  text-align:center;
-  flex-shrink:0;
-}
-.order-num-badge .num{
-  font-family:'Syne',sans-serif;
-  font-size:14px;font-weight:800;
-  color:var(--cream);display:block;
-}
-.order-num-badge .code{
-  font-size:9px;color:var(--text3);
-  font-family:'DM Mono',monospace;
-}
-
-.order-header-info{flex:1;}
-.order-customer-name{
-  font-size:15px;font-weight:700;color:var(--cream);margin-bottom:2px;
-}
-.order-meta-row{
-  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-}
-.order-time{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;}
-
-.status-chip{
-  font-size:9px;font-weight:700;
-  padding:2px 8px;border-radius:100px;
-  font-family:'DM Mono',monospace;letter-spacing:.05em;
-}
-.chip-ready{background:var(--green-dim);color:var(--green2);}
-.chip-delivering{background:var(--blue-dim);color:var(--blue);}
-.chip-done{background:var(--bg3);color:var(--text3);}
-
-.order-total-badge{
-  font-family:'Syne',sans-serif;
-  font-size:16px;font-weight:800;
-  color:var(--green);
-}
-
-.order-card-body{padding:12px 16px;}
-
-.order-items-list{
-  font-size:13px;color:var(--text2);
-  line-height:1.8;margin-bottom:10px;
-}
-.order-items-list span{color:var(--text);font-weight:500;}
-
-.address-row{
-  display:flex;align-items:flex-start;gap:8px;
-  background:var(--bg3);
-  border:1px solid var(--border2);
-  border-radius:10px;
-  padding:10px 12px;
-  margin-bottom:10px;
-}
-.address-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
-.address-text{font-size:12px;color:var(--cream2);line-height:1.5;}
-.address-label{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.06em;margin-bottom:2px;}
-
-.phone-row{
-  display:flex;align-items:center;gap:8px;
-  font-size:12px;color:var(--text2);margin-bottom:12px;
-}
-.phone-row a{color:var(--green);text-decoration:none;font-family:'DM Mono',monospace;}
-
-.action-row{display:flex;gap:8px;}
-
-.action-btn{
-  flex:1;border:none;border-radius:var(--r2);
-  padding:13px 12px;
-  font-family:'Syne',sans-serif;
-  font-size:13px;font-weight:700;
-  cursor:pointer;
-  transition:all .15s;
-  letter-spacing:-.01em;
-}
-.action-btn:active{transform:scale(.97);}
-
-.btn-accept{
-  background:var(--green);color:var(--bg);
-  box-shadow:0 4px 16px rgba(126,200,80,0.3);
-}
-.btn-accept:hover{background:var(--green2);}
-
-.btn-pickup{
-  background:var(--amber-dim);color:var(--amber);
-  border:1px solid rgba(232,184,74,0.2);
-}
-.btn-deliver{
-  background:var(--green-dim);color:var(--green);
-  border:1px solid rgba(126,200,80,0.2);
-}
-.btn-nav{
-  background:var(--blue-dim);color:var(--blue);
-  border:1px solid rgba(91,168,212,0.2);
-  flex:0 0 auto;padding:13px 14px;
-}
-
-/* Empty state */
-.empty-state{
-  text-align:center;padding:60px 20px;
-  color:var(--text3);
-}
-.empty-icon{font-size:48px;margin-bottom:14px;}
-.empty-title{font-size:16px;font-weight:700;color:var(--text2);margin-bottom:4px;font-family:'Syne',sans-serif;}
-.empty-sub{font-size:12px;line-height:1.6;}
-
-/* Offline banner */
-.offline-banner{
-  background:var(--red-dim);
-  border:1px solid rgba(240,90,69,0.2);
-  border-radius:var(--r2);
-  padding:14px 16px;
-  display:flex;align-items:center;gap:10px;
-  margin-bottom:16px;
-}
-.offline-banner .ob-icon{font-size:18px;}
-.offline-banner .ob-text{font-size:13px;color:var(--red);font-weight:600;}
-
-/* Active delivery card */
-.active-delivery{
-  background:linear-gradient(135deg,var(--green-dim),rgba(126,200,80,0.05));
-  border:1.5px solid rgba(126,200,80,0.25);
-  border-radius:var(--r);
-  padding:20px;
-  margin-bottom:16px;
-  animation:slideUp .3s ease;
-}
-.active-label{
-  font-size:10px;font-weight:700;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--green);
-  font-family:'DM Mono',monospace;margin-bottom:12px;
-  display:flex;align-items:center;gap:6px;
-}
-.active-pulse{
-  width:6px;height:6px;border-radius:50%;
-  background:var(--green);
-  animation:pulse 1.5s infinite;
-}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
-
-/* Stats tab */
-.stats-grid{
-  display:grid;grid-template-columns:1fr 1fr;
-  gap:10px;margin-bottom:16px;
-}
-.stat-box{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:var(--r);padding:16px;
-  animation:slideUp .3s ease both;
-}
-.stat-box .sv{
-  font-family:'Syne',sans-serif;
-  font-size:24px;font-weight:800;
-  color:var(--green);display:block;margin-bottom:2px;
-}
-.stat-box .sl{
-  font-size:10px;color:var(--text3);
-  font-family:'DM Mono',monospace;
-  letter-spacing:.08em;text-transform:uppercase;
-}
-
-/* Bottom nav */
-.bottom-nav{
-  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:430px;
-  background:var(--bg2);
-  border-top:1px solid var(--border);
-  display:flex;
-  padding:8px 0 20px;
-  z-index:100;
-}
-.nav-btn{
-  flex:1;display:flex;flex-direction:column;
-  align-items:center;gap:3px;
-  padding:6px 0;cursor:pointer;
-  border:none;background:transparent;
-  transition:all .15s;
-}
-.nav-btn .ni{font-size:20px;}
-.nav-btn .nl{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);font-family:'DM Mono',monospace;}
-.nav-btn.active .nl{color:var(--green);}
-.nav-btn.active .ni{filter:drop-shadow(0 0 6px rgba(126,200,80,0.6));}
-
-/* Toast */
-.toast{
-  position:fixed;bottom:88px;left:50%;transform:translateX(-50%);
-  background:var(--bg3);border:1px solid var(--border2);
-  border-radius:var(--r2);padding:12px 20px;
-  font-size:13px;font-weight:600;color:var(--cream);
-  box-shadow:var(--shadow);z-index:999;
-  white-space:nowrap;
-  opacity:0;transform:translateX(-50%) translateY(8px);
-  transition:all .25s ease;pointer-events:none;
-}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-/* Notification dot */
-.nav-dot{
-  position:absolute;top:4px;right:calc(50% - 22px);
-  width:7px;height:7px;border-radius:50%;
-  background:var(--red);border:1.5px solid var(--bg2);
-  display:none;
-}
-
-/* History item */
-.history-item{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:var(--r);padding:14px 16px;
-  margin-bottom:8px;
-  display:flex;align-items:center;gap:12px;
-  animation:slideUp .25s ease both;
-}
-.hi-icon{
-  width:40px;height:40px;border-radius:12px;
-  background:var(--green-dim);
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;flex-shrink:0;
-}
-.hi-info{flex:1;}
-.hi-name{font-size:13px;font-weight:600;color:var(--cream);margin-bottom:2px;}
-.hi-meta{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;}
-.hi-earn{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--green);}
-
-/* Register screen */
+/* Register screens */
 #register-screen{
   min-height:100vh;display:flex;flex-direction:column;
   align-items:center;justify-content:flex-start;
-  padding:40px 24px 60px;position:relative;z-index:1;
-  overflow-y:auto;
+  padding:40px 24px 60px;background:var(--bg);overflow-y:auto;
 }
-.reg-top{text-align:center;margin-bottom:28px;}
-.reg-steps{
-  display:flex;gap:6px;justify-content:center;margin-bottom:24px;
-}
-.reg-step{
-  width:28px;height:4px;border-radius:2px;
-  background:var(--border2);transition:background .3s;
-}
-.reg-step.done{background:var(--green);}
-.reg-step.active{background:var(--green);opacity:.5;}
+.reg-top{text-align:center;margin-bottom:24px;}
+.reg-steps{display:flex;gap:6px;justify-content:center;margin-bottom:20px;}
+.reg-step{width:28px;height:4px;border-radius:2px;background:var(--border2);transition:background .3s;}
+.reg-step.done{background:var(--teal);}
+.reg-step.active{background:var(--teal);opacity:0.5;}
 .reg-card{
   width:100%;background:var(--card);
-  border:1px solid var(--border2);border-radius:24px;
-  padding:24px 20px;
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:24px 20px;box-shadow:var(--shadow);
 }
-.reg-section-title{
-  font-family:'Syne',sans-serif;font-size:16px;font-weight:700;
-  color:var(--cream);margin-bottom:4px;
-}
-.reg-section-sub{font-size:12px;color:var(--text3);margin-bottom:18px;}
+.reg-section-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.reg-section-sub{font-size:13px;color:var(--text3);margin-bottom:20px;}
 .reg-btn{
-  width:100%;background:var(--green);color:var(--bg);
+  width:100%;background:var(--yellow);color:#1A1A1A;
   border:none;border-radius:var(--r2);padding:15px;
-  font-family:'Syne',sans-serif;font-size:15px;font-weight:700;
-  cursor:pointer;margin-top:8px;transition:all .15s;
-  box-shadow:0 4px 16px rgba(126,200,80,0.25);
+  font-family:'Inter',sans-serif;font-size:15px;font-weight:700;
+  cursor:pointer;margin-top:8px;
+  box-shadow:var(--shadow-yellow);transition:all .15s;
 }
 .reg-btn:active{transform:scale(.98);}
 .reg-btn.secondary{
-  background:transparent;color:var(--text2);
-  border:1px solid var(--border2);box-shadow:none;
-  margin-top:8px;
+  background:var(--bg);color:var(--text2);
+  border:1.5px solid var(--border2);box-shadow:none;
 }
 .wallet-chip{
-  display:flex;align-items:center;gap:10px;
-  background:var(--bg3);border:1.5px solid var(--border2);
-  border-radius:var(--r2);padding:12px 14px;
-  cursor:pointer;transition:all .15s;margin-bottom:8px;
+  display:flex;align-items:center;gap:12px;
+  background:var(--bg);border:1.5px solid var(--border2);
+  border-radius:var(--r2);padding:14px 16px;cursor:pointer;
+  transition:all .15s;margin-bottom:8px;
 }
-.wallet-chip.selected{border-color:var(--green);background:var(--green-dim);}
+.wallet-chip.selected{border-color:var(--teal);background:var(--teal-lt);}
 .wallet-chip-icon{font-size:22px;}
-.wallet-chip-name{font-size:14px;font-weight:600;color:var(--cream);}
+.wallet-chip-name{font-size:14px;font-weight:600;color:var(--text);}
 .wallet-chip-sub{font-size:11px;color:var(--text3);}
 .wallet-radio{
-  width:18px;height:18px;border-radius:50%;
+  width:20px;height:20px;border-radius:50%;
   border:1.5px solid var(--border2);margin-left:auto;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;
 }
-.wallet-chip.selected .wallet-radio{
-  background:var(--green);border-color:var(--green);
-}
-.wallet-chip.selected .wallet-radio::after{
-  content:'';width:6px;height:6px;border-radius:50%;background:#fff;
-}
+.wallet-chip.selected .wallet-radio{background:var(--teal);border-color:var(--teal);}
+.wallet-chip.selected .wallet-radio::after{content:'';width:7px;height:7px;border-radius:50%;background:#fff;}
 .pending-badge{
-  background:var(--amber-dim);border:1px solid rgba(232,184,74,0.2);
+  background:var(--orange-lt);border:1px solid rgba(234,88,12,0.2);
   border-radius:var(--r2);padding:14px 16px;
   display:flex;align-items:center;gap:10px;margin-bottom:12px;
 }
 .pending-badge .pb-icon{font-size:20px;}
-.pending-badge .pb-text{font-size:13px;color:var(--amber);font-weight:600;line-height:1.5;}
+.pending-badge .pb-text{font-size:13px;color:var(--orange);font-weight:600;line-height:1.5;}
+
+/* ═══════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════ */
+#app{
+  display:none;flex-direction:column;
+  min-height:100vh;min-height:100dvh;
+  background:var(--bg);
+}
+
+/* ── Top header ── */
+.app-topbar{
+  background:var(--card);
+  padding:16px 20px 14px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:50;
+}
+.rider-avatar-sm{
+  width:38px;height:38px;border-radius:50%;
+  background:var(--yellow);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;color:#1A1A1A;
+  flex-shrink:0;
+}
+.app-topbar .rider-greeting{
+  flex:1;
+}
+.rider-name-display{
+  font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.01em;
+}
+.topbar-sub{font-size:12px;color:var(--text3);margin-top:1px;}
+
+/* Online toggle */
+#online-toggle{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg3);border:none;
+  border-radius:var(--r-full);padding:8px 16px;
+  cursor:pointer;transition:all .2s;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:700;
+  color:var(--text3);letter-spacing:0.04em;
+}
+#online-toggle.online{
+  background:var(--green-lt);color:var(--green);
+  box-shadow:0 0 0 3px rgba(22,163,74,0.12);
+}
+.toggle-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--text3);transition:background .2s;
+  flex-shrink:0;
+}
+#online-toggle.online .toggle-dot{
+  background:var(--green);
+  box-shadow:0 0 0 3px rgba(22,163,74,0.2);
+  animation:pulse-green 2s infinite;
+}
+@keyframes pulse-green{0%,100%{box-shadow:0 0 0 3px rgba(22,163,74,0.2);}50%{box-shadow:0 0 0 5px rgba(22,163,74,0.05);}}
+
+/* ── Bottom nav ── */
+.bottom-nav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:430px;
+  background:var(--card);
+  border-top:1px solid var(--border);
+  display:flex;
+  padding-bottom:env(safe-area-inset-bottom);
+  z-index:100;
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:12px 0 10px;cursor:pointer;gap:4px;
+  transition:all .15s;position:relative;border:none;background:none;
+  font-family:'Inter',sans-serif;
+}
+.nav-btn.active .nav-btn-icon{color:var(--teal);}
+.nav-btn.active .nav-btn-label{color:var(--teal);font-weight:700;}
+.nav-btn-icon{
+  font-size:20px;color:var(--text3);
+  transition:all .15s;line-height:1;
+}
+.nav-btn-label{
+  font-size:10px;font-weight:500;color:var(--text3);
+  letter-spacing:0.04em;text-transform:uppercase;
+}
+.nav-btn-badge{
+  position:absolute;top:8px;right:calc(50% - 18px);
+  width:8px;height:8px;border-radius:50%;background:var(--orange);
+  display:none;
+  box-shadow:0 0 0 2px var(--card);
+}
+#nav-active .nav-btn-badge{display:none;}
+
+/* Tab content */
+.tab-content{display:none;flex:1;overflow-y:auto;padding:16px 16px 100px;}
+.tab-content.active{display:block;}
+
+/* ── Offline banner ── */
+#offline-banner{
+  display:flex;align-items:center;gap:12px;
+  background:var(--orange-lt);border-bottom:1px solid rgba(234,88,12,0.15);
+  padding:12px 20px;
+}
+.offline-icon{font-size:18px;}
+.offline-text{font-size:13px;color:var(--orange);font-weight:600;}
+
+/* ── Earnings chip ── */
+.earn-chip{
+  background:linear-gradient(135deg,var(--yellow),var(--yellow-dk));
+  border-radius:var(--r);padding:20px;margin-bottom:16px;
+  position:relative;overflow:hidden;
+  box-shadow:var(--shadow-yellow);
+}
+.earn-chip::before{
+  content:'';position:absolute;top:-30px;right:-30px;
+  width:100px;height:100px;border-radius:50%;
+  background:rgba(255,255,255,0.2);
+}
+.earn-label{font-size:11px;font-weight:600;color:rgba(0,0,0,0.5);letter-spacing:0.1em;text-transform:uppercase;}
+.earn-amount{font-size:32px;font-weight:800;color:#1A1A1A;letter-spacing:-0.02em;margin:4px 0;}
+.earn-orders{font-size:13px;color:rgba(0,0,0,0.5);font-weight:500;}
+
+/* ── Order cards (Available) ── */
+.order-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px;margin-bottom:10px;
+  box-shadow:var(--shadow-sm);
+  animation:cardIn .25s ease;transition:transform .15s,box-shadow .15s;
+}
+.order-card:active{transform:scale(0.99);box-shadow:var(--shadow-sm);}
+@keyframes cardIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.order-card-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;}
+.order-num-badge{
+  background:var(--bg);border:1px solid var(--border2);
+  border-radius:var(--r3);padding:6px 10px;flex-shrink:0;
+}
+.order-num-badge .num{
+  font-size:16px;font-weight:800;color:var(--text);display:block;letter-spacing:-0.01em;
+}
+.order-num-badge .code{font-size:9px;color:var(--text3);letter-spacing:0.06em;display:block;}
+.order-header-info{flex:1;}
+.order-customer-name{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.01em;}
+.order-meta-row{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;}
+.order-time{font-size:11px;color:var(--text3);}
+.status-chip{
+  font-size:10px;font-weight:700;padding:3px 8px;
+  border-radius:var(--r-full);letter-spacing:0.04em;
+}
+.chip-ready{background:var(--green-lt);color:var(--green);}
+.chip-delivering{background:var(--blue-lt);color:var(--blue);}
+.order-total-badge{
+  font-size:18px;font-weight:800;color:var(--teal);
+  letter-spacing:-0.02em;flex-shrink:0;
+}
+.order-card-body{border-top:1px solid var(--border);padding-top:12px;}
+.order-items-list{
+  font-size:13px;color:var(--text2);line-height:1.8;
+  margin-bottom:10px;font-weight:500;
+}
+.address-row{
+  display:flex;align-items:flex-start;gap:8px;
+  margin-bottom:8px;
+}
+.address-icon{
+  width:28px;height:28px;background:var(--teal-lt);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;
+}
+.address-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;}
+.address-text{font-size:13px;font-weight:600;color:var(--text);}
+.phone-row{font-size:13px;color:var(--teal);margin-bottom:12px;font-weight:500;}
+.phone-row a{color:var(--teal);text-decoration:none;}
+.action-row{display:flex;gap:8px;}
+
+/* ── Buttons ── */
+.action-btn{
+  flex:1;border:none;border-radius:var(--r2);padding:14px;
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .15s;text-align:center;
+  letter-spacing:-0.01em;
+}
+.action-btn:active{transform:scale(.97);}
+.btn-accept{
+  background:var(--yellow);color:#1A1A1A;
+  box-shadow:var(--shadow-yellow);
+}
+.btn-pickup{
+  background:var(--teal);color:#fff;
+  box-shadow:var(--shadow-teal);
+  font-size:15px;padding:16px;
+}
+.btn-deliver{
+  background:linear-gradient(135deg,var(--teal),#08A09B);color:#fff;
+  box-shadow:var(--shadow-teal);
+  font-size:15px;padding:16px;
+}
+.btn-nav{
+  background:var(--bg);color:var(--text2);
+  border:1.5px solid var(--border2);
+  font-size:13px;padding:14px;
+}
+
+/* ── Active delivery ── */
+.active-delivery{
+  background:var(--card);border-radius:var(--r);
+  padding:20px;margin-bottom:12px;
+  box-shadow:var(--shadow);border:1px solid var(--border);
+}
+.active-label{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--teal);color:#fff;
+  border-radius:var(--r-full);padding:5px 12px;
+  font-size:11px;font-weight:700;letter-spacing:0.06em;
+  margin-bottom:16px;
+}
+.active-pulse{
+  width:7px;height:7px;border-radius:50%;background:#fff;
+  animation:pulse-white 1.5s infinite;
+}
+@keyframes pulse-white{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+/* ── Status steps ── */
+.status-step{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;
+  display:flex;align-items:center;gap:12px;
+}
+.step-icon{
+  width:36px;height:36px;border-radius:10px;
+  background:var(--bg);display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;
+}
+.step-icon.done{background:var(--green-lt);}
+.step-label{font-size:13px;font-weight:600;color:var(--text2);}
+.step-label.done{color:var(--green);}
+.step-check{margin-left:auto;font-size:14px;}
+
+/* ── History ── */
+.history-item{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r2);padding:16px;margin-bottom:8px;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:var(--shadow-sm);
+}
+.history-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--teal);flex-shrink:0;
+}
+.history-info{flex:1;}
+.hi-name{font-size:14px;font-weight:700;color:var(--text);}
+.hi-meta{font-size:12px;color:var(--text3);margin-top:3px;}
+.hi-earn{
+  font-size:16px;font-weight:800;color:var(--teal);
+  letter-spacing:-0.01em;
+}
+
+/* ── History stats ── */
+.history-stats{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;
+}
+.history-stat{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r2);padding:16px;
+  box-shadow:var(--shadow-sm);
+}
+.history-stat-val{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.02em;}
+.history-stat-label{font-size:11px;color:var(--text3);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;}
+
+/* unpaid earnings banner */
+.unpaid-banner{
+  background:linear-gradient(135deg,var(--yellow),var(--yellow-dk));
+  border-radius:var(--r);padding:18px 20px;margin-bottom:16px;
+  display:flex;align-items:center;gap:14px;
+  box-shadow:var(--shadow-yellow);
+}
+.unpaid-banner .ub-icon{font-size:32px;}
+.unpaid-banner .ub-label{font-size:11px;font-weight:600;color:rgba(0,0,0,0.5);letter-spacing:0.08em;text-transform:uppercase;}
+.unpaid-banner .ub-amount{font-size:26px;font-weight:800;color:#1A1A1A;letter-spacing:-0.02em;}
+.unpaid-banner .ub-sub{font-size:12px;color:rgba(0,0,0,0.45);}
+
+/* ── Empty state ── */
+.empty-state{text-align:center;padding:60px 20px;}
+.empty-icon{font-size:56px;margin-bottom:16px;display:block;}
+.empty-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:-0.01em;}
+.empty-sub{font-size:14px;color:var(--text3);line-height:1.6;}
+
+/* ── Toast ── */
+#toast{
+  position:fixed;bottom:90px;left:50%;
+  transform:translateX(-50%) translateY(16px);
+  background:#1A1A1A;color:#fff;
+  padding:12px 22px;border-radius:var(--r-full);
+  font-size:13px;font-weight:600;
+  white-space:nowrap;opacity:0;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;z-index:999;
+  box-shadow:0 8px 32px rgba(0,0,0,0.2);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Skeleton loader */
+@keyframes shimmer{0%{background-position:-400px 0;}100%{background-position:400px 0;}}
+.skeleton{
+  background:linear-gradient(90deg,var(--bg3) 25%,var(--bg2) 37%,var(--bg3) 63%);
+  background-size:800px 100%;
+  animation:shimmer 1.4s infinite;
+  border-radius:8px;
+}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════ LOGIN ═══════════════ -->
-<div id="login-screen">
-  <div class="login-top">
-    <div class="rider-logo">🛵</div>
-    <div class="login-brand">Soy <span>&</span> Oden</div>
-    <div class="login-sub">Rider Portal</div>
+<!-- ═══════════════ SPLASH ═══════════════ -->
+<div id="splash-screen" class="sp-out">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0;padding:0 28px;">
+
+    <!-- Icon -->
+    <div class="sp-icon" style="margin-bottom:24px;">
+      <div style="width:90px;height:90px;border-radius:24px;background:#1B3FA0;display:flex;align-items:center;justify-content:center;box-shadow:0 16px 48px rgba(27,63,160,0.5);">
+        <div style="font-family:'DM Sans',sans-serif;font-size:22px;font-weight:800;color:white;letter-spacing:3px;">MIDI</div>
+      </div>
+    </div>
+
+    <!-- MIDI wordmark -->
+    <div class="sp-word" style="margin-bottom:8px;">
+      <div style="font-family:'DM Sans',sans-serif;font-size:50px;font-weight:800;color:white;letter-spacing:12px;line-height:1;">MIDI</div>
+      <div style="display:flex;justify-content:flex-end;margin-top:5px;">
+        <div style="width:62px;height:4px;background:#4D9FFF;border-radius:2px;"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:3px;">
+        <div style="width:46px;height:3px;background:#4D9FFF;border-radius:2px;opacity:0.5;"></div>
+      </div>
+    </div>
+
+    <!-- Expansion -->
+    <div style="display:flex;align-items:center;gap:8px;margin:20px 0 24px;">
+      <div class="sp-rail" style="display:flex;flex-direction:column;gap:9px;">
+        <div style="width:55px;height:2.5px;border-radius:2px;background:linear-gradient(to left,#4D9FFF,rgba(77,159,255,0));"></div>
+        <div style="width:55px;height:2.5px;border-radius:2px;background:linear-gradient(to left,#4D9FFF,rgba(77,159,255,0));"></div>
+      </div>
+      <div class="sp-arrow">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M2 9H16M16 9L10 3M16 9L10 15" stroke="#4D9FFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="sp-mmu" style="display:flex;align-items:baseline;gap:0;">
+        <span style="font-family:'DM Sans',sans-serif;font-size:26px;font-weight:800;color:white;letter-spacing:3px;">MM</span>
+        <span style="font-family:'DM Sans',sans-serif;font-size:26px;font-weight:800;color:#E53935;letter-spacing:3px;">U</span>
+        <div style="width:1.5px;height:20px;background:rgba(255,255,255,0.2);margin:0 8px;align-self:center;"></div>
+        <span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:white;letter-spacing:4px;">DELIVERY</span>
+      </div>
+    </div>
+
+    <!-- Tagline -->
+    <div class="sp-tag" style="text-align:center;">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.2em;text-transform:uppercase;">Rider Portal · MMU Melaka · 2026</div>
+    </div>
   </div>
+</div>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="login-screen" style="display:none;">
+
+  <!-- MIDI Logo -->
+  <div style="text-align:center;margin-bottom:28px;">
+    <div class="login-midi-icon" style="margin:0 auto 14px;">
+      <div style="font-family:'DM Sans',sans-serif;font-size:18px;font-weight:800;color:white;letter-spacing:2px;">MIDI</div>
+    </div>
+    <div class="login-midi-word">MIDI</div>
+    <div class="login-midi-sub">Rider Portal · MMU Melaka</div>
+  </div>
+
   <div class="login-card">
+    <div class="login-card-title">Sign in to your account</div>
+
     <div class="field">
-      <label>Phone Number (used to login)</label>
+      <label>Phone Number</label>
       <input type="tel" id="login-phone" placeholder="e.g. 0123456789">
     </div>
     <div class="field">
       <label>Rider PIN</label>
-      <input type="password" id="rider-pin" placeholder="4-digit PIN" maxlength="4">
+      <input type="password" id="rider-pin" placeholder="4-digit PIN" maxlength="4" style="letter-spacing:6px;">
     </div>
-    <button class="login-btn" onclick="doRiderLogin()">Login 🛵</button>
+
+    <!-- Vehicle type for plate number -->
+    <div class="field" id="login-vehicle-field">
+      <label style="margin-bottom:8px;display:block;">Vehicle Type</label>
+      <div class="vehicle-chips">
+        <div class="v-chip selected" id="lv-motor" onclick="selectLoginVehicle('motorcycle')">
+          <span class="v-chip-icon">🏍️</span>
+          <span class="v-chip-label">Motorcycle</span>
+        </div>
+        <div class="v-chip" id="lv-bicycle" onclick="selectLoginVehicle('bicycle')">
+          <span class="v-chip-icon">🚲</span>
+          <span class="v-chip-label">Bicycle</span>
+        </div>
+        <div class="v-chip" id="lv-walking" onclick="selectLoginVehicle('walking')">
+          <span class="v-chip-icon">🚶</span>
+          <span class="v-chip-label">Walking</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field" id="login-plate-field">
+      <label>Plate Number</label>
+      <input type="text" id="login-plate" placeholder="e.g. WXX 1234" style="text-transform:uppercase;letter-spacing:2px;">
+    </div>
+
+    <button class="login-btn" onclick="doRiderLogin()">Login →</button>
     <div class="login-err" id="rider-err">❌ Phone not found or wrong PIN</div>
-    <div style="text-align:center;margin-top:16px;">
+    <div style="text-align:center;margin-top:20px;">
+      <span style="font-size:13px;color:var(--text3);">New rider? </span>
+      <span style="font-size:13px;color:var(--green);font-weight:600;cursor:pointer;" onclick="showRegister()">Register here →</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ REGISTER ═══════════════ -->
+<div id="register-screen" style="display:none;">
+  <div class="reg-top">
+    <div class="rider-logo">📝</div>
+    <div class="login-brand">Join as <span>Rider</span></div>
+    <div class="login-sub">Fill in your details below</div>
+  </div>
+
+  <!-- Step indicators -->
+  <div class="reg-steps">
+    <div class="reg-step active" id="step-dot-1"></div>
+    <div class="reg-step" id="step-dot-2"></div>
+    <div class="reg-step" id="step-dot-3"></div>
+  </div>
+
+  <!-- Step 1: Personal Info -->
+  <div class="reg-card" id="reg-step-1">
+    <div class="reg-section-title">👤 Personal Info</div>
+    <div class="reg-section-sub">Step 1 of 3 — Basic details</div>
+    <div class="field">
+      <label>Full Name (as per IC)</label>
+      <input type="text" id="reg-name" placeholder="e.g. Ahmad Hafiz bin Razak">
+    </div>
+    <div class="field">
+      <label>Student ID</label>
+      <input type="text" id="reg-sid" placeholder="e.g. 1221234">
+    </div>
+    <div class="field">
+      <label>Age</label>
+      <input type="number" id="reg-age" placeholder="e.g. 21" min="18" max="30">
+    </div>
+    <div class="field">
+      <label>Phone Number</label>
+      <input type="tel" id="reg-phone" placeholder="e.g. 0123456789">
+    </div>
+    <div class="field">
+      <label>Set Your PIN (4 digits)</label>
+      <input type="password" id="reg-pin" placeholder="e.g. 1234" maxlength="4">
+    </div>
+    <button class="reg-btn" onclick="regNext(1)">Next →</button>
+    <button class="reg-btn secondary" onclick="showLogin()">← Back to Login</button>
+    <div class="login-err" id="reg-err-1"></div>
+  </div>
+
+  <!-- Step 2: Payment Info -->
+  <div class="reg-card" id="reg-step-2" style="display:none;">
+    <div class="reg-section-title">💳 Payment Info</div>
+    <div class="reg-section-sub">Step 2 of 3 — How you want to receive payment</div>
+    <div class="field">
+      <label>Choose Wallet</label>
+      <div class="wallet-chip selected" id="wc-tng" onclick="selectWallet('TNG')">
+        <span class="wallet-chip-icon">💰</span>
+        <div><div class="wallet-chip-name">Touch \'n Go eWallet</div><div class="wallet-chip-sub">Most popular in Malaysia</div></div>
+        <div class="wallet-radio"></div>
+      </div>
+      <div class="wallet-chip" id="wc-duitnow" onclick="selectWallet('DuitNow')">
+        <span class="wallet-chip-icon">🏦</span>
+        <div><div class="wallet-chip-name">DuitNow (Bank Transfer)</div><div class="wallet-chip-sub">Direct to bank account</div></div>
+        <div class="wallet-radio"></div>
+      </div>
+    </div>
+    <div class="field" id="tng-field">
+      <label>TNG Phone Number</label>
+      <input type="tel" id="reg-tng" placeholder="e.g. 0123456789">
+    </div>
+    <div class="field" id="bank-field" style="display:none;">
+      <label>Bank Account Number</label>
+      <input type="text" id="reg-bank" placeholder="e.g. 1234567890">
+      <div style="height:10px;"></div>
+      <label>Bank Name</label>
+      <input type="text" id="reg-bankname" placeholder="e.g. Maybank">
+    </div>
+    <button class="reg-btn" onclick="regNext(2)">Next →</button>
+    <button class="reg-btn secondary" onclick="regBack(1)">← Back</button>
+    <div class="login-err" id="reg-err-2"></div>
+  </div>
+
+  <!-- Step 3: Review & Submit -->
+  <div class="reg-card" id="reg-step-3" style="display:none;">
+    <div class="reg-section-title">✅ Review & Submit</div>
+    <div class="reg-section-sub">Step 3 of 3 — Confirm your details</div>
+    <div id="reg-review" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:14px;margin-bottom:16px;"></div>
+    <div class="pending-badge">
+      <span class="pb-icon">⏳</span>
+      <div class="pb-text">Your account will be <b>pending approval</b> until the boss activates it. You'll be able to login once approved.</div>
+    </div>
+    <button class="reg-btn" onclick="submitRegistration()">Submit Registration 🎉</button>
+    <button class="reg-btn secondary" onclick="regBack(2)">← Back</button>
+    <div class="login-err" id="reg-err-3"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN APP ═══════════════ -->
+<div id="app">
+
+  <!-- Top bar -->
+  <div class="app-topbar">
+    <div class="rider-avatar-sm" id="rider-avatar-initial">R</div>
+    <div class="rider-greeting">
+      <div class="rider-name-display">Hey, <span id="rider-name-display">Rider</span> 👋</div>
+      <div class="topbar-sub">MIDI Delivery · RM 2.00/order</div>
+    </div>
+    <div class="online-toggle" id="online-toggle" onclick="toggleOnline()">
+      <div class="toggle-dot"></div>
+      <span class="toggle-label">OFFLINE</span>
+    </div>
+  </div>
+
+  <!-- Offline banner -->
+  <div class="offline-banner" id="offline-banner" style="display:flex;">
+    <span class="offline-icon">🔴</span>
+    <span class="offline-text">You're offline — tap to go online</span>
+  </div>
+
+  <!-- Earn chip -->
+  <div style="padding:14px 16px 0;" id="earn-strip">
+    <div class="earn-chip">
+      <div class="earn-label">Today's Earnings</div>
+      <div class="earn-amount" id="earn-today">RM 0</div>
+      <div class="earn-orders"><span id="earn-orders">0</span> deliveries · <b>RM 2.00</b> per order</div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" id="nav-available" onclick="switchTab('available',this)">
+      <div class="nav-btn-badge" id="new-order-dot"></div>
+      <div class="nav-btn-icon">🏠</div>
+      <div class="nav-btn-label">HOME</div>
+    </button>
+    <button class="nav-btn" id="nav-active" onclick="switchTab('active',this)">
+      <div class="nav-btn-icon">🛵</div>
+      <div class="nav-btn-label">ACTIVE</div>
+    </button>
+    <button class="nav-btn" id="nav-history" onclick="switchTab('history',this)">
+      <div class="nav-btn-icon">📋</div>
+      <div class="nav-btn-label">HISTORY</div>
+    </button>
+  </div>
+
+  <!-- Available -->
+  <div class="tab-content active" id="tab-available">
+    <div id="available-list">
+      <div class="empty-state">
+        <span class="empty-icon">📭</span>
+        <div class="empty-title">No orders yet</div>
+        <div class="empty-sub">Go online and wait for orders</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active -->
+  <div class="tab-content" id="tab-active">
+    <div id="active-delivery-wrap">
+      <div class="empty-state">
+        <span class="empty-icon">🛵</span>
+        <div class="empty-title">No active delivery</div>
+        <div class="empty-sub">Accept an order to start riding</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="tab-content" id="tab-history">
+    <div class="history-stats">
+      <div class="history-stat">
+        <div class="history-stat-val" id="h-total-orders">0</div>
+        <div class="history-stat-label">Total Orders</div>
+      </div>
+      <div class="history-stat">
+        <div class="history-stat-val" id="h-today">RM 0</div>
+        <div class="history-stat-label">Today</div>
+      </div>
+      <div class="history-stat">
+        <div class="history-stat-val" id="h-total-earn">RM 0</div>
+        <div class="history-stat-label">Total Earned</div>
+      </div>
+      <div class="history-stat">
+        <div class="history-stat-val" id="h-avg-earn">RM 0</div>
+        <div class="history-stat-label">Per Order Avg</div>
+      </div>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+</div>
+
+</body>>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MIDI — Rider Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root{
+  /* Colors */
+  --yellow:    #F7E96C;
+  --yellow-dk: #E8D44A;
+  --yellow-lt: #FFFBE8;
+  --yellow-dim:rgba(247,233,108,0.15);
+  --teal:      #0ABAB5;
+  --teal-lt:   #E6F9F8;
+  --teal-dim:  rgba(10,186,181,0.12);
+  --bg:        #F4F5F7;
+  --bg2:       #FFFFFF;
+  --bg3:       #ECEEF2;
+  --card:      #FFFFFF;
+  --border:    rgba(0,0,0,0.07);
+  --border2:   rgba(0,0,0,0.12);
+  --text:      #1A1A1A;
+  --text2:     #555B6B;
+  --text3:     #9AA0B0;
+  --green:     #16A34A;
+  --green-lt:  #DCFCE7;
+  --orange:    #EA580C;
+  --orange-lt: #FFF0E6;
+  --blue:      #2563EB;
+  --blue-lt:   #EFF6FF;
+  --red:       #DC2626;
+  --red-lt:    #FEF2F2;
+
+  /* Spacing */
+  --r:   20px;
+  --r2:  14px;
+  --r3:  10px;
+  --r-full: 100px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  --shadow:    0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.08), 0 16px 48px rgba(0,0,0,0.08);
+  --shadow-yellow: 0 4px 20px rgba(247,233,108,0.5);
+  --shadow-teal:   0 4px 20px rgba(10,186,181,0.35);
+}
+
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;min-height:100dvh;
+  max-width:430px;
+  margin:0 auto;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ═══════════════════════════════════════
+   SPLASH SCREEN (keep dark for brand)
+═══════════════════════════════════════ */
+#splash-screen{
+  position:fixed;inset:0;z-index:999;
+  background:#0D1826;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+}
+@keyframes splashIconIn{0%{opacity:0;transform:scale(0.7);}65%{opacity:1;transform:scale(1.05);}100%{opacity:1;transform:scale(1);}}
+@keyframes splashWordIn{0%{opacity:0;transform:translateY(14px);}100%{opacity:1;transform:translateY(0);}}
+@keyframes railShoot{0%{transform:scaleX(0);transform-origin:right;opacity:0;}100%{transform:scaleX(1);transform-origin:right;opacity:1;}}
+@keyframes arrowIn{0%{opacity:0;transform:translateX(-16px);}100%{opacity:1;transform:translateX(0);}}
+@keyframes mmuIn{0%{opacity:0;transform:translateX(-10px);}100%{opacity:1;transform:translateX(0);}}
+@keyframes tagIn{0%{opacity:0;}100%{opacity:1;}}
+@keyframes splashFadeOut{0%{opacity:1;}100%{opacity:0;pointer-events:none;}}
+.sp-icon {animation:splashIconIn  0.55s cubic-bezier(.34,1.56,.64,1) 0.1s  both;}
+.sp-word {animation:splashWordIn  0.45s ease                         0.7s  both;}
+.sp-rail {animation:railShoot     0.4s  cubic-bezier(.4,0,.2,1)      1.15s both;}
+.sp-arrow{animation:arrowIn       0.25s ease                         1.55s both;}
+.sp-mmu  {animation:mmuIn         0.4s  ease                         1.6s  both;}
+.sp-tag  {animation:tagIn         0.5s  ease                         2.1s  both;}
+.sp-out  {animation:splashFadeOut 0.5s  ease                         2.8s  both;animation-fill-mode:forwards;}
+
+/* ═══════════════════════════════════════
+   LOGIN
+═══════════════════════════════════════ */
+#login-screen{
+  min-height:100vh;min-height:100dvh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:40px 24px 60px;
+  background:var(--bg);
+}
+.login-midi-icon{
+  width:88px;height:88px;border-radius:24px;
+  background:#1B3FA0;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 12px 40px rgba(27,63,160,0.25);
+  margin-bottom:16px;
+}
+.login-midi-word{
+  font-size:36px;font-weight:800;
+  color:#1A1A1A;letter-spacing:8px;line-height:1;margin-bottom:4px;
+}
+.login-midi-sub{
+  font-size:11px;font-weight:600;color:var(--text3);
+  letter-spacing:0.2em;text-transform:uppercase;margin-bottom:32px;
+}
+.login-card{
+  width:100%;background:var(--card);
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:28px 24px;box-shadow:var(--shadow-lg);
+}
+.login-card-title{
+  font-size:16px;font-weight:700;color:var(--text);
+  margin-bottom:20px;letter-spacing:-0.01em;
+}
+
+/* Fields */
+.field{margin-bottom:16px;}
+.field label{
+  font-size:11px;font-weight:600;color:var(--text3);
+  letter-spacing:0.08em;text-transform:uppercase;
+  display:block;margin-bottom:8px;
+}
+.field input,.field select{
+  width:100%;background:var(--bg);border:1.5px solid var(--border2);
+  border-radius:var(--r2);padding:14px 16px;
+  font-family:'Inter',sans-serif;font-size:15px;font-weight:500;
+  color:var(--text);outline:none;transition:all .2s;
+}
+.field input:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px var(--teal-dim);}
+.field input::placeholder{color:var(--text3);}
+
+/* Login button */
+.login-btn{
+  width:100%;background:var(--yellow);color:#1A1A1A;
+  border:none;border-radius:var(--r2);padding:16px;
+  font-family:'Inter',sans-serif;font-size:15px;font-weight:700;
+  cursor:pointer;margin-top:8px;
+  box-shadow:var(--shadow-yellow);
+  transition:all .15s;letter-spacing:-0.01em;
+}
+.login-btn:active{transform:scale(.97);box-shadow:none;}
+.login-err{font-size:13px;color:var(--red);text-align:center;margin-top:10px;display:none;}
+
+/* Vehicle chips */
+.vehicle-chips{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.v-chip{
+  background:var(--bg);border:1.5px solid var(--border2);
+  border-radius:var(--r2);padding:12px 6px;text-align:center;
+  cursor:pointer;transition:all .15s;
+}
+.v-chip.selected{border-color:var(--teal);background:var(--teal-lt);}
+.v-chip-icon{font-size:22px;display:block;margin-bottom:4px;}
+.v-chip-label{font-size:11px;font-weight:600;color:var(--text2);}
+.v-chip.selected .v-chip-label{color:var(--teal);}
+
+/* Register screens */
+#register-screen{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-start;
+  padding:40px 24px 60px;background:var(--bg);overflow-y:auto;
+}
+.reg-top{text-align:center;margin-bottom:24px;}
+.reg-steps{display:flex;gap:6px;justify-content:center;margin-bottom:20px;}
+.reg-step{width:28px;height:4px;border-radius:2px;background:var(--border2);transition:background .3s;}
+.reg-step.done{background:var(--teal);}
+.reg-step.active{background:var(--teal);opacity:0.5;}
+.reg-card{
+  width:100%;background:var(--card);
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:24px 20px;box-shadow:var(--shadow);
+}
+.reg-section-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.reg-section-sub{font-size:13px;color:var(--text3);margin-bottom:20px;}
+.reg-btn{
+  width:100%;background:var(--yellow);color:#1A1A1A;
+  border:none;border-radius:var(--r2);padding:15px;
+  font-family:'Inter',sans-serif;font-size:15px;font-weight:700;
+  cursor:pointer;margin-top:8px;
+  box-shadow:var(--shadow-yellow);transition:all .15s;
+}
+.reg-btn:active{transform:scale(.98);}
+.reg-btn.secondary{
+  background:var(--bg);color:var(--text2);
+  border:1.5px solid var(--border2);box-shadow:none;
+}
+.wallet-chip{
+  display:flex;align-items:center;gap:12px;
+  background:var(--bg);border:1.5px solid var(--border2);
+  border-radius:var(--r2);padding:14px 16px;cursor:pointer;
+  transition:all .15s;margin-bottom:8px;
+}
+.wallet-chip.selected{border-color:var(--teal);background:var(--teal-lt);}
+.wallet-chip-icon{font-size:22px;}
+.wallet-chip-name{font-size:14px;font-weight:600;color:var(--text);}
+.wallet-chip-sub{font-size:11px;color:var(--text3);}
+.wallet-radio{
+  width:20px;height:20px;border-radius:50%;
+  border:1.5px solid var(--border2);margin-left:auto;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;
+}
+.wallet-chip.selected .wallet-radio{background:var(--teal);border-color:var(--teal);}
+.wallet-chip.selected .wallet-radio::after{content:'';width:7px;height:7px;border-radius:50%;background:#fff;}
+.pending-badge{
+  background:var(--orange-lt);border:1px solid rgba(234,88,12,0.2);
+  border-radius:var(--r2);padding:14px 16px;
+  display:flex;align-items:center;gap:10px;margin-bottom:12px;
+}
+.pending-badge .pb-icon{font-size:20px;}
+.pending-badge .pb-text{font-size:13px;color:var(--orange);font-weight:600;line-height:1.5;}
+
+/* ═══════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════ */
+#app{
+  display:none;flex-direction:column;
+  min-height:100vh;min-height:100dvh;
+  background:var(--bg);
+}
+
+/* ── Top header ── */
+.app-topbar{
+  background:var(--card);
+  padding:16px 20px 14px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:50;
+}
+.rider-avatar-sm{
+  width:38px;height:38px;border-radius:50%;
+  background:var(--yellow);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;color:#1A1A1A;
+  flex-shrink:0;
+}
+.app-topbar .rider-greeting{
+  flex:1;
+}
+.rider-name-display{
+  font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.01em;
+}
+.topbar-sub{font-size:12px;color:var(--text3);margin-top:1px;}
+
+/* Online toggle */
+#online-toggle{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg3);border:none;
+  border-radius:var(--r-full);padding:8px 16px;
+  cursor:pointer;transition:all .2s;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:700;
+  color:var(--text3);letter-spacing:0.04em;
+}
+#online-toggle.online{
+  background:var(--green-lt);color:var(--green);
+  box-shadow:0 0 0 3px rgba(22,163,74,0.12);
+}
+.toggle-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--text3);transition:background .2s;
+  flex-shrink:0;
+}
+#online-toggle.online .toggle-dot{
+  background:var(--green);
+  box-shadow:0 0 0 3px rgba(22,163,74,0.2);
+  animation:pulse-green 2s infinite;
+}
+@keyframes pulse-green{0%,100%{box-shadow:0 0 0 3px rgba(22,163,74,0.2);}50%{box-shadow:0 0 0 5px rgba(22,163,74,0.05);}}
+
+/* ── Bottom nav ── */
+.bottom-nav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:430px;
+  background:var(--card);
+  border-top:1px solid var(--border);
+  display:flex;
+  padding-bottom:env(safe-area-inset-bottom);
+  z-index:100;
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:12px 0 10px;cursor:pointer;gap:4px;
+  transition:all .15s;position:relative;border:none;background:none;
+  font-family:'Inter',sans-serif;
+}
+.nav-btn.active .nav-btn-icon{color:var(--teal);}
+.nav-btn.active .nav-btn-label{color:var(--teal);font-weight:700;}
+.nav-btn-icon{
+  font-size:20px;color:var(--text3);
+  transition:all .15s;line-height:1;
+}
+.nav-btn-label{
+  font-size:10px;font-weight:500;color:var(--text3);
+  letter-spacing:0.04em;text-transform:uppercase;
+}
+.nav-btn-badge{
+  position:absolute;top:8px;right:calc(50% - 18px);
+  width:8px;height:8px;border-radius:50%;background:var(--orange);
+  display:none;
+  box-shadow:0 0 0 2px var(--card);
+}
+#nav-active .nav-btn-badge{display:none;}
+
+/* Tab content */
+.tab-content{display:none;flex:1;overflow-y:auto;padding:16px 16px 100px;}
+.tab-content.active{display:block;}
+
+/* ── Offline banner ── */
+#offline-banner{
+  display:flex;align-items:center;gap:12px;
+  background:var(--orange-lt);border-bottom:1px solid rgba(234,88,12,0.15);
+  padding:12px 20px;
+}
+.offline-icon{font-size:18px;}
+.offline-text{font-size:13px;color:var(--orange);font-weight:600;}
+
+/* ── Earnings chip ── */
+.earn-chip{
+  background:linear-gradient(135deg,var(--yellow),var(--yellow-dk));
+  border-radius:var(--r);padding:20px;margin-bottom:16px;
+  position:relative;overflow:hidden;
+  box-shadow:var(--shadow-yellow);
+}
+.earn-chip::before{
+  content:'';position:absolute;top:-30px;right:-30px;
+  width:100px;height:100px;border-radius:50%;
+  background:rgba(255,255,255,0.2);
+}
+.earn-label{font-size:11px;font-weight:600;color:rgba(0,0,0,0.5);letter-spacing:0.1em;text-transform:uppercase;}
+.earn-amount{font-size:32px;font-weight:800;color:#1A1A1A;letter-spacing:-0.02em;margin:4px 0;}
+.earn-orders{font-size:13px;color:rgba(0,0,0,0.5);font-weight:500;}
+
+/* ── Order cards (Available) ── */
+.order-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px;margin-bottom:10px;
+  box-shadow:var(--shadow-sm);
+  animation:cardIn .25s ease;transition:transform .15s,box-shadow .15s;
+}
+.order-card:active{transform:scale(0.99);box-shadow:var(--shadow-sm);}
+@keyframes cardIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.order-card-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;}
+.order-num-badge{
+  background:var(--bg);border:1px solid var(--border2);
+  border-radius:var(--r3);padding:6px 10px;flex-shrink:0;
+}
+.order-num-badge .num{
+  font-size:16px;font-weight:800;color:var(--text);display:block;letter-spacing:-0.01em;
+}
+.order-num-badge .code{font-size:9px;color:var(--text3);letter-spacing:0.06em;display:block;}
+.order-header-info{flex:1;}
+.order-customer-name{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.01em;}
+.order-meta-row{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;}
+.order-time{font-size:11px;color:var(--text3);}
+.status-chip{
+  font-size:10px;font-weight:700;padding:3px 8px;
+  border-radius:var(--r-full);letter-spacing:0.04em;
+}
+.chip-ready{background:var(--green-lt);color:var(--green);}
+.chip-delivering{background:var(--blue-lt);color:var(--blue);}
+.order-total-badge{
+  font-size:18px;font-weight:800;color:var(--teal);
+  letter-spacing:-0.02em;flex-shrink:0;
+}
+.order-card-body{border-top:1px solid var(--border);padding-top:12px;}
+.order-items-list{
+  font-size:13px;color:var(--text2);line-height:1.8;
+  margin-bottom:10px;font-weight:500;
+}
+.address-row{
+  display:flex;align-items:flex-start;gap:8px;
+  margin-bottom:8px;
+}
+.address-icon{
+  width:28px;height:28px;background:var(--teal-lt);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;
+}
+.address-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;}
+.address-text{font-size:13px;font-weight:600;color:var(--text);}
+.phone-row{font-size:13px;color:var(--teal);margin-bottom:12px;font-weight:500;}
+.phone-row a{color:var(--teal);text-decoration:none;}
+.action-row{display:flex;gap:8px;}
+
+/* ── Buttons ── */
+.action-btn{
+  flex:1;border:none;border-radius:var(--r2);padding:14px;
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .15s;text-align:center;
+  letter-spacing:-0.01em;
+}
+.action-btn:active{transform:scale(.97);}
+.btn-accept{
+  background:var(--yellow);color:#1A1A1A;
+  box-shadow:var(--shadow-yellow);
+}
+.btn-pickup{
+  background:var(--teal);color:#fff;
+  box-shadow:var(--shadow-teal);
+  font-size:15px;padding:16px;
+}
+.btn-deliver{
+  background:linear-gradient(135deg,var(--teal),#08A09B);color:#fff;
+  box-shadow:var(--shadow-teal);
+  font-size:15px;padding:16px;
+}
+.btn-nav{
+  background:var(--bg);color:var(--text2);
+  border:1.5px solid var(--border2);
+  font-size:13px;padding:14px;
+}
+
+/* ── Active delivery ── */
+.active-delivery{
+  background:var(--card);border-radius:var(--r);
+  padding:20px;margin-bottom:12px;
+  box-shadow:var(--shadow);border:1px solid var(--border);
+}
+.active-label{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--teal);color:#fff;
+  border-radius:var(--r-full);padding:5px 12px;
+  font-size:11px;font-weight:700;letter-spacing:0.06em;
+  margin-bottom:16px;
+}
+.active-pulse{
+  width:7px;height:7px;border-radius:50%;background:#fff;
+  animation:pulse-white 1.5s infinite;
+}
+@keyframes pulse-white{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+/* ── Status steps ── */
+.status-step{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;
+  display:flex;align-items:center;gap:12px;
+}
+.step-icon{
+  width:36px;height:36px;border-radius:10px;
+  background:var(--bg);display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;
+}
+.step-icon.done{background:var(--green-lt);}
+.step-label{font-size:13px;font-weight:600;color:var(--text2);}
+.step-label.done{color:var(--green);}
+.step-check{margin-left:auto;font-size:14px;}
+
+/* ── History ── */
+.history-item{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r2);padding:16px;margin-bottom:8px;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:var(--shadow-sm);
+}
+.history-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--teal);flex-shrink:0;
+}
+.history-info{flex:1;}
+.hi-name{font-size:14px;font-weight:700;color:var(--text);}
+.hi-meta{font-size:12px;color:var(--text3);margin-top:3px;}
+.hi-earn{
+  font-size:16px;font-weight:800;color:var(--teal);
+  letter-spacing:-0.01em;
+}
+
+/* ── History stats ── */
+.history-stats{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;
+}
+.history-stat{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r2);padding:16px;
+  box-shadow:var(--shadow-sm);
+}
+.history-stat-val{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.02em;}
+.history-stat-label{font-size:11px;color:var(--text3);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;}
+
+/* unpaid earnings banner */
+.unpaid-banner{
+  background:linear-gradient(135deg,var(--yellow),var(--yellow-dk));
+  border-radius:var(--r);padding:18px 20px;margin-bottom:16px;
+  display:flex;align-items:center;gap:14px;
+  box-shadow:var(--shadow-yellow);
+}
+.unpaid-banner .ub-icon{font-size:32px;}
+.unpaid-banner .ub-label{font-size:11px;font-weight:600;color:rgba(0,0,0,0.5);letter-spacing:0.08em;text-transform:uppercase;}
+.unpaid-banner .ub-amount{font-size:26px;font-weight:800;color:#1A1A1A;letter-spacing:-0.02em;}
+.unpaid-banner .ub-sub{font-size:12px;color:rgba(0,0,0,0.45);}
+
+/* ── Empty state ── */
+.empty-state{text-align:center;padding:60px 20px;}
+.empty-icon{font-size:56px;margin-bottom:16px;display:block;}
+.empty-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:-0.01em;}
+.empty-sub{font-size:14px;color:var(--text3);line-height:1.6;}
+
+/* ── Toast ── */
+#toast{
+  position:fixed;bottom:90px;left:50%;
+  transform:translateX(-50%) translateY(16px);
+  background:#1A1A1A;color:#fff;
+  padding:12px 22px;border-radius:var(--r-full);
+  font-size:13px;font-weight:600;
+  white-space:nowrap;opacity:0;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;z-index:999;
+  box-shadow:0 8px 32px rgba(0,0,0,0.2);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Skeleton loader */
+@keyframes shimmer{0%{background-position:-400px 0;}100%{background-position:400px 0;}}
+.skeleton{
+  background:linear-gradient(90deg,var(--bg3) 25%,var(--bg2) 37%,var(--bg3) 63%);
+  background-size:800px 100%;
+  animation:shimmer 1.4s infinite;
+  border-radius:8px;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ SPLASH ═══════════════ -->
+<div id="splash-screen" class="sp-out">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0;padding:0 28px;">
+
+    <!-- Icon -->
+    <div class="sp-icon" style="margin-bottom:24px;">
+      <div style="width:90px;height:90px;border-radius:24px;background:#1B3FA0;display:flex;align-items:center;justify-content:center;box-shadow:0 16px 48px rgba(27,63,160,0.5);">
+        <div style="font-family:'DM Sans',sans-serif;font-size:22px;font-weight:800;color:white;letter-spacing:3px;">MIDI</div>
+      </div>
+    </div>
+
+    <!-- MIDI wordmark -->
+    <div class="sp-word" style="margin-bottom:8px;">
+      <div style="font-family:'DM Sans',sans-serif;font-size:50px;font-weight:800;color:white;letter-spacing:12px;line-height:1;">MIDI</div>
+      <div style="display:flex;justify-content:flex-end;margin-top:5px;">
+        <div style="width:62px;height:4px;background:#4D9FFF;border-radius:2px;"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:3px;">
+        <div style="width:46px;height:3px;background:#4D9FFF;border-radius:2px;opacity:0.5;"></div>
+      </div>
+    </div>
+
+    <!-- Expansion -->
+    <div style="display:flex;align-items:center;gap:8px;margin:20px 0 24px;">
+      <div class="sp-rail" style="display:flex;flex-direction:column;gap:9px;">
+        <div style="width:55px;height:2.5px;border-radius:2px;background:linear-gradient(to left,#4D9FFF,rgba(77,159,255,0));"></div>
+        <div style="width:55px;height:2.5px;border-radius:2px;background:linear-gradient(to left,#4D9FFF,rgba(77,159,255,0));"></div>
+      </div>
+      <div class="sp-arrow">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M2 9H16M16 9L10 3M16 9L10 15" stroke="#4D9FFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="sp-mmu" style="display:flex;align-items:baseline;gap:0;">
+        <span style="font-family:'DM Sans',sans-serif;font-size:26px;font-weight:800;color:white;letter-spacing:3px;">MM</span>
+        <span style="font-family:'DM Sans',sans-serif;font-size:26px;font-weight:800;color:#E53935;letter-spacing:3px;">U</span>
+        <div style="width:1.5px;height:20px;background:rgba(255,255,255,0.2);margin:0 8px;align-self:center;"></div>
+        <span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:white;letter-spacing:4px;">DELIVERY</span>
+      </div>
+    </div>
+
+    <!-- Tagline -->
+    <div class="sp-tag" style="text-align:center;">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.2em;text-transform:uppercase;">Rider Portal · MMU Melaka · 2026</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="login-screen" style="display:none;">
+
+  <!-- MIDI Logo -->
+  <div style="text-align:center;margin-bottom:28px;">
+    <div class="login-midi-icon" style="margin:0 auto 14px;">
+      <div style="font-family:'DM Sans',sans-serif;font-size:18px;font-weight:800;color:white;letter-spacing:2px;">MIDI</div>
+    </div>
+    <div class="login-midi-word">MIDI</div>
+    <div class="login-midi-sub">Rider Portal · MMU Melaka</div>
+  </div>
+
+  <div class="login-card">
+    <div class="login-card-title">Sign in to your account</div>
+
+    <div class="field">
+      <label>Phone Number</label>
+      <input type="tel" id="login-phone" placeholder="e.g. 0123456789">
+    </div>
+    <div class="field">
+      <label>Rider PIN</label>
+      <input type="password" id="rider-pin" placeholder="4-digit PIN" maxlength="4" style="letter-spacing:6px;">
+    </div>
+
+    <!-- Vehicle type for plate number -->
+    <div class="field" id="login-vehicle-field">
+      <label style="margin-bottom:8px;display:block;">Vehicle Type</label>
+      <div class="vehicle-chips">
+        <div class="v-chip selected" id="lv-motor" onclick="selectLoginVehicle('motorcycle')">
+          <span class="v-chip-icon">🏍️</span>
+          <span class="v-chip-label">Motorcycle</span>
+        </div>
+        <div class="v-chip" id="lv-bicycle" onclick="selectLoginVehicle('bicycle')">
+          <span class="v-chip-icon">🚲</span>
+          <span class="v-chip-label">Bicycle</span>
+        </div>
+        <div class="v-chip" id="lv-walking" onclick="selectLoginVehicle('walking')">
+          <span class="v-chip-icon">🚶</span>
+          <span class="v-chip-label">Walking</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field" id="login-plate-field">
+      <label>Plate Number</label>
+      <input type="text" id="login-plate" placeholder="e.g. WXX 1234" style="text-transform:uppercase;letter-spacing:2px;">
+    </div>
+
+    <button class="login-btn" onclick="doRiderLogin()">Login →</button>
+    <div class="login-err" id="rider-err">❌ Phone not found or wrong PIN</div>
+    <div style="text-align:center;margin-top:20px;">
       <span style="font-size:13px;color:var(--text3);">New rider? </span>
       <span style="font-size:13px;color:var(--green);font-weight:600;cursor:pointer;" onclick="showRegister()">Register here →</span>
     </div>
@@ -851,7 +1687,8 @@ const db  = getFirestore(app);
 // ═══════════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════════
-const EARN_PER_ORDER = 3.00;
+const DELIVERY_FEE = 2.00;
+const EARN_PER_ORDER = DELIVERY_FEE;
 let riderData        = null;  // full rider profile from Firestore
 let riderDocId       = '';
 let isOnline         = false;
@@ -870,6 +1707,49 @@ function nameToId(name){ return name.toLowerCase().replace(/\s+/g,'_').replace(/
 function phoneToId(phone){ return 'rider_' + phone.replace(/[^0-9]/g,''); }
 
 // ═══════════════════════════════════════════════════════
+//  SPLASH → LOGIN
+// ═══════════════════════════════════════════════════════
+setTimeout(() => {
+  const splash = document.getElementById('splash-screen');
+  setTimeout(() => {
+    splash.style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+  }, 500);
+}, 2800);
+
+// ═══════════════════════════════════════════════════════
+//  VEHICLE TYPE SELECTION (login)
+// ═══════════════════════════════════════════════════════
+let loginVehicle = 'motorcycle';
+
+function selectLoginVehicle(type) {
+  loginVehicle = type;
+  ['motorcycle','bicycle','walking'].forEach(t => {
+    const el = document.getElementById('lv-' + (t==='motorcycle'?'motor':t==='bicycle'?'bicycle':'walking'));
+    if(el) el.classList.toggle('selected', t === type);
+  });
+  // Show/hide plate field — walking doesn't need plate
+  const plateField = document.getElementById('login-plate-field');
+  if(plateField) {
+    plateField.style.display = type === 'walking' ? 'none' : 'block';
+    if(type === 'walking') document.getElementById('login-plate').value = '';
+  }
+}
+window.selectLoginVehicle = selectLoginVehicle;
+
+// ═══════════════════════════════════════════════════════
+// ── Heartbeat: ping Firebase every 5 min when online ──
+let heartbeatInterval = null;
+function startHeartbeat(){
+  if(heartbeatInterval) clearInterval(heartbeatInterval);
+  heartbeatInterval = setInterval(async()=>{
+    if(isOnline && riderDocId){
+      try{ await updateDoc(doc(db,'riders',riderDocId),{ lastSeenAt: new Date().toISOString() }); }
+      catch(e){}
+    }
+  }, 5*60*1000);
+}
+
 //  SCREEN NAVIGATION
 // ═══════════════════════════════════════════════════════
 function showLogin(){
@@ -1006,12 +1886,21 @@ window.submitRegistration = submitRegistration;
 async function doRiderLogin(){
   const phone = document.getElementById('login-phone').value.trim();
   const pin   = document.getElementById('rider-pin').value.trim();
+  const plate = document.getElementById('login-plate').value.trim().toUpperCase();
   const err   = document.getElementById('rider-err');
 
   if(!phone||!pin){ err.textContent='⚠️ Enter phone and PIN'; err.style.display='block'; return; }
 
+  // Validate plate if not walking
+  if(loginVehicle !== 'walking' && !plate){
+    err.textContent='⚠️ Please enter your plate number';
+    err.style.display='block';
+    document.getElementById('login-plate').focus();
+    return;
+  }
+
   const loginBtn = document.querySelector('#login-screen .login-btn');
-  loginBtn.textContent = '⏳ Logging in...'; loginBtn.disabled = true;
+  loginBtn.textContent = '⏳ Logging in…'; loginBtn.disabled = true;
 
   try {
     const docId = phoneToId(phone);
@@ -1023,43 +1912,56 @@ async function doRiderLogin(){
     if(data.status === 'pending'){
       err.textContent = '⏳ Account pending boss approval';
       err.style.display='block';
-      loginBtn.textContent='Login 🛵'; loginBtn.disabled=false;
+      loginBtn.textContent='Login →'; loginBtn.disabled=false;
       return;
     }
     if(data.status === 'suspended'){
       err.textContent = '🚫 Account suspended. Contact boss.';
       err.style.display='block';
-      loginBtn.textContent='Login 🛵'; loginBtn.disabled=false;
+      loginBtn.textContent='Login →'; loginBtn.disabled=false;
       return;
     }
 
-    // Success!
-    riderData  = data;
+    // Save vehicle + plate to Firebase on each login
+    const updateData = { vehicle: loginVehicle, isOnline: false }; // always reset to offline on login
+    if(loginVehicle !== 'walking') updateData.plateNumber = plate;
+    else updateData.plateNumber = '';
+    await updateDoc(doc(db,'riders',docId), updateData);
+
+    // Success
+    riderData  = { ...data, ...updateData };
     riderDocId = docId;
     document.getElementById('login-screen').style.display='none';
     document.getElementById('app').style.display='block';
     document.getElementById('rider-name-display').textContent = data.name.split(' ')[0];
+    const av=document.getElementById('rider-avatar-initial'); if(av) av.textContent=data.name.charAt(0).toUpperCase();
+    const avatar = document.getElementById('rider-avatar-initial');
+    if(avatar) avatar.textContent = data.name.charAt(0).toUpperCase();
 
-    // Reset today if new day
     if(data.todayDate !== new Date().toDateString()){
       await updateDoc(doc(db,'riders',docId),{ todayEarnings:0, todayOrders:0, todayDate:new Date().toDateString() });
     }
 
     listenToRiderDoc();
     initOrderListener();
-    showToast('👋 Welcome back, ' + data.name.split(' ')[0] + '!');
+    startHeartbeat();
+    showToast('👋 Welcome, ' + data.name.split(' ')[0] + '! ' + (loginVehicle==='walking'?'🚶':loginVehicle==='bicycle'?'🚲':'🏍️'));
   } catch(e){
     err.textContent = '❌ ' + e.message;
     err.style.display='block';
     setTimeout(()=>err.style.display='none', 3000);
   }
-  loginBtn.textContent='Login 🛵'; loginBtn.disabled=false;
+  loginBtn.textContent='Login →'; loginBtn.disabled=false;
 }
 window.doRiderLogin = doRiderLogin;
 document.addEventListener('keydown', e=>{ if(e.key==='Enter') doRiderLogin(); });
 
-function doLogout(){
+async function doLogout(){
   if(myActive){ showToast('⚠️ Finish your active delivery first!'); return; }
+  // Set offline in Firebase before logout
+  try { await updateDoc(doc(db,'riders',riderDocId),{ isOnline: false }); } catch(e){}
+  if(heartbeatInterval) clearInterval(heartbeatInterval);
+  heartbeatInterval = null;
   if(unsubOrders) unsubOrders();
   if(unsubRider)  unsubRider();
   document.getElementById('app').style.display='none';
@@ -1124,8 +2026,8 @@ function initOrderListener(){
 // ═══════════════════════════════════════════════════════
 //  ONLINE TOGGLE
 // ═══════════════════════════════════════════════════════
-function toggleOnline(){
-  if(myActive){ showToast('Finish your active delivery first!'); return; }
+async function toggleOnline(){
+  if(myActive){ showToast('⚠️ Finish your active delivery first!'); return; }
   isOnline=!isOnline;
   const tog=document.getElementById('online-toggle');
   const lbl=tog.querySelector('.toggle-label');
@@ -1133,6 +2035,12 @@ function toggleOnline(){
   lbl.textContent=isOnline?'ONLINE':'OFFLINE';
   showToast(isOnline?'🟢 You are Online!':'🔴 You are Offline');
   document.getElementById('offline-banner').style.display=isOnline?'none':'flex';
+  // ✅ Sync online status to Firebase so Admin knows
+  try {
+    const update = { isOnline };
+    if(isOnline) update.lastSeenAt = new Date().toISOString();
+    await updateDoc(doc(db,'riders',riderDocId), update);
+  } catch(e){ console.error('Online sync error:',e); }
   renderAvailable();
 }
 window.toggleOnline = toggleOnline;
@@ -1294,7 +2202,7 @@ function renderHistory(){
 }
 
 function updateEarnings(){
-  document.getElementById('earn-today').textContent  = 'RM '+todayEarnings.toFixed(0);
+  document.getElementById('earn-today').textContent  = 'RM '+todayEarnings.toFixed(2);
   document.getElementById('earn-orders').textContent = completedOrders.length;
 }
 
@@ -1327,22 +2235,23 @@ window.markPickedUp=markPickedUp;
 async function markDelivered(docId){
   try{
     const o=myActive;
+    const earning = o.riderEarning || DELIVERY_FEE; // use order's riderEarning field
     const entry={
       docId:       o.docId,
       code:        o.code||'—',
       name:        o.name||'Customer',
       address:     o.address||'—',
       total:       o.total||0,
-      earning:     EARN_PER_ORDER,
+      earning,
       completedAt: new Date().toISOString(),
     };
     await updateDoc(doc(db,'orders',docId),{status:'done'});
     await updateDoc(doc(db,'riders',riderDocId),{
-      totalEarnings:   increment(EARN_PER_ORDER),
+      totalEarnings:   increment(earning),
       totalOrders:     increment(1),
-      todayEarnings:   increment(EARN_PER_ORDER),
+      todayEarnings:   increment(earning),
       todayOrders:     increment(1),
-      unpaidEarnings:  increment(EARN_PER_ORDER),   // track unpaid
+      unpaidEarnings:  increment(earning),
       todayDate:       new Date().toDateString(),
       completedOrders: arrayUnion(entry),
     });
