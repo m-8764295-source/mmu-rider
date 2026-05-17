@@ -2,1676 +2,211 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MIDI — Rider Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MIDI — Rider</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'DM Sans',sans-serif; background:#0F0F13; color:#e8e8ed; min-height:100vh; }
 
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  /* ── Auth ── */
+  #auth-screen { min-height:100vh; background:linear-gradient(160deg,#0F0F13 0%,#1a1a2e 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; }
+  .auth-logo { font-size:36px; font-weight:800; color:#fff; margin-bottom:4px; }
+  .auth-tagline { font-size:13px; color:#555; margin-bottom:36px; }
+  .auth-tabs { display:flex; background:#1C1C24; border-radius:14px; padding:4px; width:100%; max-width:340px; margin-bottom:20px; }
+  .auth-tab { flex:1; padding:10px; text-align:center; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; color:#666; transition:all .2s; }
+  .auth-tab.active { background:#6366f1; color:#fff; }
+  .auth-card { background:#1C1C24; border-radius:20px; padding:28px; width:100%; max-width:340px; border:1px solid #2a2a36; }
+  .auth-err { background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.25); border-radius:10px; padding:10px 14px; font-size:12px; color:#f87171; margin-bottom:14px; display:none; }
+  .field-label { font-size:11px; font-weight:700; color:#555; text-transform:uppercase; letter-spacing:.08em; display:block; margin-bottom:6px; }
+  .field-input { width:100%; padding:12px 14px; border:1px solid #2a2a36; border-radius:12px; font-family:'DM Sans',sans-serif; font-size:14px; background:#12121A; color:#fff; outline:none; margin-bottom:14px; }
+  .field-input:focus { border-color:#6366f1; }
+  .auth-btn { width:100%; padding:14px; background:linear-gradient(135deg,#6366f1,#4f46e5); color:#fff; border:none; border-radius:12px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:700; cursor:pointer; }
+  .auth-btn:disabled { opacity:.5; cursor:not-allowed; }
 
-:root{
-  /* Colors */
-  --yellow:    #F7E96C;
-  --yellow-dk: #E8D44A;
-  --yellow-lt: #FFFBE8;
-  --yellow-dim:rgba(247,233,108,0.15);
-  --teal:      #0ABAB5;
-  --teal-lt:   #E6F9F8;
-  --teal-dim:  rgba(10,186,181,0.12);
-  --bg:        #F4F5F7;
-  --bg2:       #FFFFFF;
-  --bg3:       #ECEEF2;
-  --card:      #FFFFFF;
-  --border:    rgba(0,0,0,0.07);
-  --border2:   rgba(0,0,0,0.12);
-  --text:      #1A1A1A;
-  --text2:     #555B6B;
-  --text3:     #9AA0B0;
-  --green:     #16A34A;
-  --green-lt:  #DCFCE7;
-  --orange:    #EA580C;
-  --orange-lt: #FFF0E6;
-  --blue:      #2563EB;
-  --blue-lt:   #EFF6FF;
-  --red:       #DC2626;
-  --red-lt:    #FEF2F2;
+  /* ── App ── */
+  #app { display:none; min-height:100vh; background:#0F0F13; }
+  .topbar { background:#1C1C24; border-bottom:1px solid #2a2a36; padding:0 20px; height:58px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .topbar-left { display:flex; align-items:center; gap:10px; }
+  .topbar-brand { font-size:17px; font-weight:800; color:#fff; }
+  .rider-pill { background:rgba(99,102,241,0.2); color:#818cf8; font-size:11px; font-weight:700; padding:3px 10px; border-radius:100px; border:1px solid rgba(99,102,241,0.3); }
+  .status-toggle { display:flex; align-items:center; gap:8px; }
+  .toggle-label { font-size:12px; font-weight:600; color:#666; }
+  .toggle { width:44px; height:24px; border-radius:100px; background:#2a2a36; position:relative; cursor:pointer; transition:background .2s; border:none; flex-shrink:0; }
+  .toggle.on { background:#22c55e; }
+  .toggle::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition:transform .2s; }
+  .toggle.on::after { transform:translateX(20px); }
+  .logout-btn { background:none; border:1px solid #2a2a36; border-radius:10px; padding:6px 12px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#666; cursor:pointer; }
 
-  /* Spacing */
-  --r:   20px;
-  --r2:  14px;
-  --r3:  10px;
-  --r-full: 100px;
+  /* ── Tabs ── */
+  .tabs { display:flex; background:#1C1C24; border-bottom:1px solid #2a2a36; }
+  .tab { flex:1; padding:14px; text-align:center; font-size:13px; font-weight:600; color:#666; cursor:pointer; border-bottom:2px solid transparent; transition:all .2s; }
+  .tab.active { color:#818cf8; border-bottom-color:#6366f1; }
 
-  /* Shadows */
-  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
-  --shadow:    0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.06);
-  --shadow-lg: 0 4px 16px rgba(0,0,0,0.08), 0 16px 48px rgba(0,0,0,0.08);
-  --shadow-yellow: 0 4px 20px rgba(247,233,108,0.5);
-  --shadow-teal:   0 4px 20px rgba(10,186,181,0.35);
-}
+  /* ── Main ── */
+  .main { padding:16px; max-width:600px; margin:0 auto; }
 
-body{
-  font-family:'Inter',sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;min-height:100dvh;
-  max-width:430px;
-  margin:0 auto;
-  overflow-x:hidden;
-  -webkit-font-smoothing:antialiased;
-}
+  /* ── Order cards ── */
+  .order-card { background:#1C1C24; border-radius:20px; border:1px solid #2a2a36; margin-bottom:14px; overflow:hidden; transition:border-color .2s; }
+  .order-card.available { border-color:#6366f1; }
+  .order-card.mine { border-color:#22c55e; }
 
-/* ═══════════════════════════════════════
-   SPLASH SCREEN (keep dark for brand)
-═══════════════════════════════════════ */
-#splash-screen{
-  position:fixed;inset:0;z-index:999;
-  background:#0D1826;
-  display:flex;align-items:center;justify-content:center;flex-direction:column;
-}
-@keyframes splashIconIn{0%{opacity:0;transform:scale(0.7);}65%{opacity:1;transform:scale(1.05);}100%{opacity:1;transform:scale(1);}}
-@keyframes splashWordIn{0%{opacity:0;transform:translateY(14px);}100%{opacity:1;transform:translateY(0);}}
-@keyframes railShoot{0%{transform:scaleX(0);transform-origin:right;opacity:0;}100%{transform:scaleX(1);transform-origin:right;opacity:1;}}
-@keyframes arrowIn{0%{opacity:0;transform:translateX(-16px);}100%{opacity:1;transform:translateX(0);}}
-@keyframes mmuIn{0%{opacity:0;transform:translateX(-10px);}100%{opacity:1;transform:translateX(0);}}
-@keyframes tagIn{0%{opacity:0;}100%{opacity:1;}}
-@keyframes splashFadeOut{0%{opacity:1;}100%{opacity:0;pointer-events:none;}}
-.sp-icon {animation:splashIconIn  0.55s cubic-bezier(.34,1.56,.64,1) 0.1s  both;}
-.sp-word {animation:splashWordIn  0.45s ease                         0.7s  both;}
-.sp-rail {animation:railShoot     0.4s  cubic-bezier(.4,0,.2,1)      1.15s both;}
-.sp-arrow{animation:arrowIn       0.25s ease                         1.55s both;}
-.sp-mmu  {animation:mmuIn         0.4s  ease                         1.6s  both;}
-.sp-tag  {animation:tagIn         0.5s  ease                         2.1s  both;}
-.sp-out  {animation:splashFadeOut 0.5s  ease                         2.8s  both;animation-fill-mode:forwards;}
+  .card-header { padding:14px 16px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid #2a2a36; }
+  .card-icon { width:42px; height:42px; border-radius:14px; background:rgba(99,102,241,0.15); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+  .card-icon.mine { background:rgba(34,197,94,0.15); }
+  .card-info { flex:1; }
+  .card-code { font-size:15px; font-weight:800; color:#fff; }
+  .card-meta { font-size:12px; color:#555; margin-top:2px; }
+  .card-badge { font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; }
+  .badge-available { background:rgba(99,102,241,0.15); color:#818cf8; border:1px solid rgba(99,102,241,0.3); }
+  .badge-mine { background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3); }
+  .badge-delivering { background:rgba(168,85,247,0.15); color:#c084fc; border:1px solid rgba(168,85,247,0.3); }
 
-/* ═══════════════════════════════════════
-   LOGIN
-═══════════════════════════════════════ */
-#login-screen{
-  min-height:100vh;min-height:100dvh;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:40px 24px 60px;
-  background:var(--bg);
-}
-.login-midi-icon{
-  width:88px;height:88px;border-radius:24px;
-  background:#1B3FA0;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 12px 40px rgba(27,63,160,0.25);
-  margin-bottom:16px;
-}
-.login-midi-word{
-  font-size:36px;font-weight:800;
-  color:#1A1A1A;letter-spacing:8px;line-height:1;margin-bottom:4px;
-}
-.login-midi-sub{
-  font-size:11px;font-weight:600;color:var(--text3);
-  letter-spacing:0.2em;text-transform:uppercase;margin-bottom:32px;
-}
-.login-card{
-  width:100%;background:var(--card);
-  border:1px solid var(--border);border-radius:var(--r);
-  padding:28px 24px;box-shadow:var(--shadow-lg);
-}
-.login-card-title{
-  font-size:16px;font-weight:700;color:var(--text);
-  margin-bottom:20px;letter-spacing:-0.01em;
-}
+  .card-body { padding:14px 16px; }
+  .info-row { display:flex; align-items:flex-start; gap:8px; margin-bottom:8px; font-size:13px; color:#aaa; }
+  .info-row:last-child { margin-bottom:0; }
+  .info-icon { flex-shrink:0; width:20px; text-align:center; }
+  .info-text { flex:1; line-height:1.4; }
+  .info-text b { color:#e8e8ed; font-weight:600; }
+  .items-box { background:#12121A; border-radius:12px; padding:12px 14px; margin-bottom:12px; }
+  .item-row { display:flex; justify-content:space-between; font-size:13px; color:#aaa; padding:3px 0; }
+  .item-row span:last-child { color:#e8e8ed; font-weight:600; }
+  .total-row { display:flex; justify-content:space-between; font-size:14px; font-weight:700; color:#22c55e; padding-top:8px; border-top:1px solid #2a2a36; margin-top:6px; }
 
-/* Fields */
-.field{margin-bottom:16px;}
-.field label{
-  font-size:11px;font-weight:600;color:var(--text3);
-  letter-spacing:0.08em;text-transform:uppercase;
-  display:block;margin-bottom:8px;
-}
-.field input,.field select{
-  width:100%;background:var(--bg);border:1.5px solid var(--border2);
-  border-radius:var(--r2);padding:14px 16px;
-  font-family:'Inter',sans-serif;font-size:15px;font-weight:500;
-  color:var(--text);outline:none;transition:all .2s;
-}
-.field input:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px var(--teal-dim);}
-.field input::placeholder{color:var(--text3);}
+  .card-actions { padding:12px 16px 16px; display:flex; gap:10px; }
+  .grab-btn { flex:1; padding:13px; background:linear-gradient(135deg,#6366f1,#4f46e5); color:#fff; border:none; border-radius:14px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:all .15s; }
+  .grab-btn:active { transform:scale(0.97); }
+  .deliver-btn { flex:1; padding:13px; background:linear-gradient(135deg,#22c55e,#16a34a); color:#fff; border:none; border-radius:14px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:all .15s; }
+  .deliver-btn:active { transform:scale(0.97); }
+  .drop-btn { padding:13px 16px; background:#2a2a36; color:#888; border:none; border-radius:14px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; }
 
-/* Login button */
-.login-btn{
-  width:100%;background:var(--yellow);color:#1A1A1A;
-  border:none;border-radius:var(--r2);padding:16px;
-  font-family:'Inter',sans-serif;font-size:15px;font-weight:700;
-  cursor:pointer;margin-top:8px;
-  box-shadow:var(--shadow-yellow);
-  transition:all .15s;letter-spacing:-0.01em;
-}
-.login-btn:active{transform:scale(.97);box-shadow:none;}
-.login-err{font-size:13px;color:var(--red);text-align:center;margin-top:10px;display:none;}
+  /* ── Stats ── */
+  .stats-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; }
+  .stat-card { background:#1C1C24; border-radius:16px; padding:16px 18px; border:1px solid #2a2a36; }
+  .stat-val { font-size:26px; font-weight:800; }
+  .stat-label { font-size:11px; color:#555; margin-top:4px; text-transform:uppercase; letter-spacing:.06em; }
+  .stat-card.green .stat-val { color:#22c55e; }
+  .stat-card.indigo .stat-val { color:#818cf8; }
 
-/* Vehicle chips */
-.vehicle-chips{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
-.v-chip{
-  background:var(--bg);border:1.5px solid var(--border2);
-  border-radius:var(--r2);padding:12px 6px;text-align:center;
-  cursor:pointer;transition:all .15s;
-}
-.v-chip.selected{border-color:var(--teal);background:var(--teal-lt);}
-.v-chip-icon{font-size:22px;display:block;margin-bottom:4px;}
-.v-chip-label{font-size:11px;font-weight:600;color:var(--text2);}
-.v-chip.selected .v-chip-label{color:var(--teal);}
+  /* ── Empty ── */
+  .empty { text-align:center; padding:60px 20px; }
+  .empty-icon { font-size:48px; margin-bottom:14px; }
+  .empty-title { font-size:16px; font-weight:700; color:#444; margin-bottom:6px; }
+  .empty-sub { font-size:13px; color:#333; }
 
-/* Register screens */
-#register-screen{
-  min-height:100vh;display:flex;flex-direction:column;
-  align-items:center;justify-content:flex-start;
-  padding:40px 24px 60px;background:var(--bg);overflow-y:auto;
-}
-.reg-top{text-align:center;margin-bottom:24px;}
-.reg-steps{display:flex;gap:6px;justify-content:center;margin-bottom:20px;}
-.reg-step{width:28px;height:4px;border-radius:2px;background:var(--border2);transition:background .3s;}
-.reg-step.done{background:var(--teal);}
-.reg-step.active{background:var(--teal);opacity:0.5;}
-.reg-card{
-  width:100%;background:var(--card);
-  border:1px solid var(--border);border-radius:var(--r);
-  padding:24px 20px;box-shadow:var(--shadow);
-}
-.reg-section-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;}
-.reg-section-sub{font-size:13px;color:var(--text3);margin-bottom:20px;}
-.reg-btn{
-  width:100%;background:var(--yellow);color:#1A1A1A;
-  border:none;border-radius:var(--r2);padding:15px;
-  font-family:'Inter',sans-serif;font-size:15px;font-weight:700;
-  cursor:pointer;margin-top:8px;
-  box-shadow:var(--shadow-yellow);transition:all .15s;
-}
-.reg-btn:active{transform:scale(.98);}
-.reg-btn.secondary{
-  background:var(--bg);color:var(--text2);
-  border:1.5px solid var(--border2);box-shadow:none;
-}
-.wallet-chip{
-  display:flex;align-items:center;gap:12px;
-  background:var(--bg);border:1.5px solid var(--border2);
-  border-radius:var(--r2);padding:14px 16px;cursor:pointer;
-  transition:all .15s;margin-bottom:8px;
-}
-.wallet-chip.selected{border-color:var(--teal);background:var(--teal-lt);}
-.wallet-chip-icon{font-size:22px;}
-.wallet-chip-name{font-size:14px;font-weight:600;color:var(--text);}
-.wallet-chip-sub{font-size:11px;color:var(--text3);}
-.wallet-radio{
-  width:20px;height:20px;border-radius:50%;
-  border:1.5px solid var(--border2);margin-left:auto;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;
-}
-.wallet-chip.selected .wallet-radio{background:var(--teal);border-color:var(--teal);}
-.wallet-chip.selected .wallet-radio::after{content:'';width:7px;height:7px;border-radius:50%;background:#fff;}
-.pending-badge{
-  background:var(--orange-lt);border:1px solid rgba(234,88,12,0.2);
-  border-radius:var(--r2);padding:14px 16px;
-  display:flex;align-items:center;gap:10px;margin-bottom:12px;
-}
-.pending-badge .pb-icon{font-size:20px;}
-.pending-badge .pb-text{font-size:13px;color:var(--orange);font-weight:600;line-height:1.5;}
+  /* ── Suspended ── */
+  #suspended-screen { display:none; min-height:100vh; background:#0F0F13; align-items:center; justify-content:center; flex-direction:column; gap:16px; padding:24px; text-align:center; }
+  .suspended-icon { font-size:56px; }
+  .suspended-title { font-size:20px; font-weight:800; color:#f87171; }
+  .suspended-sub { font-size:14px; color:#555; max-width:280px; }
 
-/* ═══════════════════════════════════════
-   APP SHELL
-═══════════════════════════════════════ */
-#app{
-  display:none;flex-direction:column;
-  min-height:100vh;min-height:100dvh;
-  background:var(--bg);
-}
+  /* ── Toast ── */
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#fff; color:#1c1c1e; padding:12px 22px; border-radius:100px; font-size:13px; font-weight:600; z-index:9999; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity .3s; }
+  .toast.show { opacity:1; }
 
-/* ── Top header ── */
-.app-topbar{
-  background:var(--card);
-  padding:16px 20px 14px;
-  display:flex;align-items:center;gap:12px;
-  border-bottom:1px solid var(--border);
-  position:sticky;top:0;z-index:50;
-}
-.rider-avatar-sm{
-  width:38px;height:38px;border-radius:50%;
-  background:var(--yellow);
-  display:flex;align-items:center;justify-content:center;
-  font-size:16px;font-weight:800;color:#1A1A1A;
-  flex-shrink:0;
-}
-.app-topbar .rider-greeting{
-  flex:1;
-}
-.rider-name-display{
-  font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.01em;
-}
-.topbar-sub{font-size:12px;color:var(--text3);margin-top:1px;}
-
-/* Online toggle */
-#online-toggle{
-  display:flex;align-items:center;gap:8px;
-  background:var(--bg3);border:none;
-  border-radius:var(--r-full);padding:8px 16px;
-  cursor:pointer;transition:all .2s;
-  font-family:'Inter',sans-serif;font-size:12px;font-weight:700;
-  color:var(--text3);letter-spacing:0.04em;
-}
-#online-toggle.online{
-  background:var(--green-lt);color:var(--green);
-  box-shadow:0 0 0 3px rgba(22,163,74,0.12);
-}
-.toggle-dot{
-  width:8px;height:8px;border-radius:50%;
-  background:var(--text3);transition:background .2s;
-  flex-shrink:0;
-}
-#online-toggle.online .toggle-dot{
-  background:var(--green);
-  box-shadow:0 0 0 3px rgba(22,163,74,0.2);
-  animation:pulse-green 2s infinite;
-}
-@keyframes pulse-green{0%,100%{box-shadow:0 0 0 3px rgba(22,163,74,0.2);}50%{box-shadow:0 0 0 5px rgba(22,163,74,0.05);}}
-
-/* ── Bottom nav ── */
-.bottom-nav{
-  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:430px;
-  background:var(--card);
-  border-top:1px solid var(--border);
-  display:flex;
-  padding-bottom:env(safe-area-inset-bottom);
-  z-index:100;
-}
-.nav-btn{
-  flex:1;display:flex;flex-direction:column;align-items:center;
-  padding:12px 0 10px;cursor:pointer;gap:4px;
-  transition:all .15s;position:relative;border:none;background:none;
-  font-family:'Inter',sans-serif;
-}
-.nav-btn.active .nav-btn-icon{color:var(--teal);}
-.nav-btn.active .nav-btn-label{color:var(--teal);font-weight:700;}
-.nav-btn-icon{
-  font-size:20px;color:var(--text3);
-  transition:all .15s;line-height:1;
-}
-.nav-btn-label{
-  font-size:10px;font-weight:500;color:var(--text3);
-  letter-spacing:0.04em;text-transform:uppercase;
-}
-.nav-btn-badge{
-  position:absolute;top:8px;right:calc(50% - 18px);
-  width:8px;height:8px;border-radius:50%;background:var(--orange);
-  display:none;
-  box-shadow:0 0 0 2px var(--card);
-}
-#nav-active .nav-btn-badge{display:none;}
-
-/* Tab content */
-.tab-content{display:none;flex:1;overflow-y:auto;padding:16px 16px 100px;}
-.tab-content.active{display:block;}
-
-/* ── Offline banner ── */
-#offline-banner{
-  display:flex;align-items:center;gap:12px;
-  background:var(--orange-lt);border-bottom:1px solid rgba(234,88,12,0.15);
-  padding:12px 20px;
-}
-.offline-icon{font-size:18px;}
-.offline-text{font-size:13px;color:var(--orange);font-weight:600;}
-
-/* ── Earnings chip ── */
-.earn-chip{
-  background:linear-gradient(135deg,var(--yellow),var(--yellow-dk));
-  border-radius:var(--r);padding:20px;margin-bottom:16px;
-  position:relative;overflow:hidden;
-  box-shadow:var(--shadow-yellow);
-}
-.earn-chip::before{
-  content:'';position:absolute;top:-30px;right:-30px;
-  width:100px;height:100px;border-radius:50%;
-  background:rgba(255,255,255,0.2);
-}
-.earn-label{font-size:11px;font-weight:600;color:rgba(0,0,0,0.5);letter-spacing:0.1em;text-transform:uppercase;}
-.earn-amount{font-size:32px;font-weight:800;color:#1A1A1A;letter-spacing:-0.02em;margin:4px 0;}
-.earn-orders{font-size:13px;color:rgba(0,0,0,0.5);font-weight:500;}
-
-/* ── Order cards (Available) ── */
-.order-card{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:var(--r);padding:18px;margin-bottom:10px;
-  box-shadow:var(--shadow-sm);
-  animation:cardIn .25s ease;transition:transform .15s,box-shadow .15s;
-}
-.order-card:active{transform:scale(0.99);box-shadow:var(--shadow-sm);}
-@keyframes cardIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-.order-card-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;}
-.order-num-badge{
-  background:var(--bg);border:1px solid var(--border2);
-  border-radius:var(--r3);padding:6px 10px;flex-shrink:0;
-}
-.order-num-badge .num{
-  font-size:16px;font-weight:800;color:var(--text);display:block;letter-spacing:-0.01em;
-}
-.order-num-badge .code{font-size:9px;color:var(--text3);letter-spacing:0.06em;display:block;}
-.order-header-info{flex:1;}
-.order-customer-name{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.01em;}
-.order-meta-row{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;}
-.order-time{font-size:11px;color:var(--text3);}
-.status-chip{
-  font-size:10px;font-weight:700;padding:3px 8px;
-  border-radius:var(--r-full);letter-spacing:0.04em;
-}
-.chip-ready{background:var(--green-lt);color:var(--green);}
-.chip-delivering{background:var(--blue-lt);color:var(--blue);}
-.order-total-badge{
-  font-size:18px;font-weight:800;color:var(--teal);
-  letter-spacing:-0.02em;flex-shrink:0;
-}
-.order-card-body{border-top:1px solid var(--border);padding-top:12px;}
-.order-items-list{
-  font-size:13px;color:var(--text2);line-height:1.8;
-  margin-bottom:10px;font-weight:500;
-}
-.address-row{
-  display:flex;align-items:flex-start;gap:8px;
-  margin-bottom:8px;
-}
-.address-icon{
-  width:28px;height:28px;background:var(--teal-lt);
-  border-radius:8px;display:flex;align-items:center;justify-content:center;
-  font-size:14px;flex-shrink:0;
-}
-.address-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;}
-.address-text{font-size:13px;font-weight:600;color:var(--text);}
-.phone-row{font-size:13px;color:var(--teal);margin-bottom:12px;font-weight:500;}
-.phone-row a{color:var(--teal);text-decoration:none;}
-.action-row{display:flex;gap:8px;}
-
-/* ── Buttons ── */
-.action-btn{
-  flex:1;border:none;border-radius:var(--r2);padding:14px;
-  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;
-  cursor:pointer;transition:all .15s;text-align:center;
-  letter-spacing:-0.01em;
-}
-.action-btn:active{transform:scale(.97);}
-.btn-accept{
-  background:var(--yellow);color:#1A1A1A;
-  box-shadow:var(--shadow-yellow);
-}
-.btn-pickup{
-  background:var(--teal);color:#fff;
-  box-shadow:var(--shadow-teal);
-  font-size:15px;padding:16px;
-}
-.btn-deliver{
-  background:linear-gradient(135deg,var(--teal),#08A09B);color:#fff;
-  box-shadow:var(--shadow-teal);
-  font-size:15px;padding:16px;
-}
-.btn-nav{
-  background:var(--bg);color:var(--text2);
-  border:1.5px solid var(--border2);
-  font-size:13px;padding:14px;
-}
-
-/* ── Active delivery ── */
-.active-delivery{
-  background:var(--card);border-radius:var(--r);
-  padding:20px;margin-bottom:12px;
-  box-shadow:var(--shadow);border:1px solid var(--border);
-}
-.active-label{
-  display:inline-flex;align-items:center;gap:6px;
-  background:var(--teal);color:#fff;
-  border-radius:var(--r-full);padding:5px 12px;
-  font-size:11px;font-weight:700;letter-spacing:0.06em;
-  margin-bottom:16px;
-}
-.active-pulse{
-  width:7px;height:7px;border-radius:50%;background:#fff;
-  animation:pulse-white 1.5s infinite;
-}
-@keyframes pulse-white{0%,100%{opacity:1;}50%{opacity:0.4;}}
-
-/* ── Status steps ── */
-.status-step{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;
-  display:flex;align-items:center;gap:12px;
-}
-.step-icon{
-  width:36px;height:36px;border-radius:10px;
-  background:var(--bg);display:flex;align-items:center;justify-content:center;
-  font-size:16px;flex-shrink:0;
-}
-.step-icon.done{background:var(--green-lt);}
-.step-label{font-size:13px;font-weight:600;color:var(--text2);}
-.step-label.done{color:var(--green);}
-.step-check{margin-left:auto;font-size:14px;}
-
-/* ── History ── */
-.history-item{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:var(--r2);padding:16px;margin-bottom:8px;
-  display:flex;align-items:center;gap:12px;
-  box-shadow:var(--shadow-sm);
-}
-.history-dot{
-  width:10px;height:10px;border-radius:50%;
-  background:var(--teal);flex-shrink:0;
-}
-.history-info{flex:1;}
-.hi-name{font-size:14px;font-weight:700;color:var(--text);}
-.hi-meta{font-size:12px;color:var(--text3);margin-top:3px;}
-.hi-earn{
-  font-size:16px;font-weight:800;color:var(--teal);
-  letter-spacing:-0.01em;
-}
-
-/* ── History stats ── */
-.history-stats{
-  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;
-}
-.history-stat{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:var(--r2);padding:16px;
-  box-shadow:var(--shadow-sm);
-}
-.history-stat-val{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.02em;}
-.history-stat-label{font-size:11px;color:var(--text3);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;}
-
-/* unpaid earnings banner */
-.unpaid-banner{
-  background:linear-gradient(135deg,var(--yellow),var(--yellow-dk));
-  border-radius:var(--r);padding:18px 20px;margin-bottom:16px;
-  display:flex;align-items:center;gap:14px;
-  box-shadow:var(--shadow-yellow);
-}
-.unpaid-banner .ub-icon{font-size:32px;}
-.unpaid-banner .ub-label{font-size:11px;font-weight:600;color:rgba(0,0,0,0.5);letter-spacing:0.08em;text-transform:uppercase;}
-.unpaid-banner .ub-amount{font-size:26px;font-weight:800;color:#1A1A1A;letter-spacing:-0.02em;}
-.unpaid-banner .ub-sub{font-size:12px;color:rgba(0,0,0,0.45);}
-
-/* ── Empty state ── */
-.empty-state{text-align:center;padding:60px 20px;}
-.empty-icon{font-size:56px;margin-bottom:16px;display:block;}
-.empty-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:-0.01em;}
-.empty-sub{font-size:14px;color:var(--text3);line-height:1.6;}
-
-/* ── Toast ── */
-#toast{
-  position:fixed;bottom:90px;left:50%;
-  transform:translateX(-50%) translateY(16px);
-  background:#1A1A1A;color:#fff;
-  padding:12px 22px;border-radius:var(--r-full);
-  font-size:13px;font-weight:600;
-  white-space:nowrap;opacity:0;
-  transition:all .3s cubic-bezier(.34,1.56,.64,1);
-  pointer-events:none;z-index:999;
-  box-shadow:0 8px 32px rgba(0,0,0,0.2);
-}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-/* Skeleton loader */
-@keyframes shimmer{0%{background-position:-400px 0;}100%{background-position:400px 0;}}
-.skeleton{
-  background:linear-gradient(90deg,var(--bg3) 25%,var(--bg2) 37%,var(--bg3) 63%);
-  background-size:800px 100%;
-  animation:shimmer 1.4s infinite;
-  border-radius:8px;
-}
+  .section-title { font-size:11px; font-weight:700; color:#444; text-transform:uppercase; letter-spacing:.08em; margin-bottom:12px; }
+  .online-dot { width:8px; height:8px; border-radius:50%; background:#22c55e; display:inline-block; margin-right:4px; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════ SPLASH ═══════════════ -->
-<div id="splash-screen" class="sp-out">
-  <div style="display:flex;flex-direction:column;align-items:center;gap:0;padding:0 28px;">
-
-    <!-- Icon -->
-    <div class="sp-icon" style="margin-bottom:24px;">
-      <div style="width:90px;height:90px;border-radius:24px;background:#1B3FA0;display:flex;align-items:center;justify-content:center;box-shadow:0 16px 48px rgba(27,63,160,0.5);">
-        <div style="font-family:'DM Sans',sans-serif;font-size:22px;font-weight:800;color:white;letter-spacing:3px;">MIDI</div>
-      </div>
+<!-- ── Auth ── -->
+<div id="auth-screen">
+  <div class="auth-logo">MIDI</div>
+  <div class="auth-tagline">Rider Portal</div>
+  <div class="auth-tabs">
+    <div class="auth-tab active" onclick="switchAuthTab('login',this)">Sign In</div>
+    <div class="auth-tab" onclick="switchAuthTab('signup',this)">Sign Up</div>
+  </div>
+  <div class="auth-card">
+    <div class="auth-err" id="auth-err"></div>
+    <div id="signup-fields" style="display:none;">
+      <label class="field-label">Full Name</label>
+      <input class="field-input" type="text" id="auth-name" placeholder="e.g. Ali Hassan">
+      <label class="field-label">Phone</label>
+      <input class="field-input" type="tel" id="auth-phone" placeholder="+60 12-345 6789">
     </div>
-
-    <!-- MIDI wordmark -->
-    <div class="sp-word" style="margin-bottom:8px;">
-      <div style="font-family:'DM Sans',sans-serif;font-size:50px;font-weight:800;color:white;letter-spacing:12px;line-height:1;">MIDI</div>
-      <div style="display:flex;justify-content:flex-end;margin-top:5px;">
-        <div style="width:62px;height:4px;background:#4D9FFF;border-radius:2px;"></div>
-      </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:3px;">
-        <div style="width:46px;height:3px;background:#4D9FFF;border-radius:2px;opacity:0.5;"></div>
-      </div>
-    </div>
-
-    <!-- Expansion -->
-    <div style="display:flex;align-items:center;gap:8px;margin:20px 0 24px;">
-      <div class="sp-rail" style="display:flex;flex-direction:column;gap:9px;">
-        <div style="width:55px;height:2.5px;border-radius:2px;background:linear-gradient(to left,#4D9FFF,rgba(77,159,255,0));"></div>
-        <div style="width:55px;height:2.5px;border-radius:2px;background:linear-gradient(to left,#4D9FFF,rgba(77,159,255,0));"></div>
-      </div>
-      <div class="sp-arrow">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d="M2 9H16M16 9L10 3M16 9L10 15" stroke="#4D9FFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div class="sp-mmu" style="display:flex;align-items:baseline;gap:0;">
-        <span style="font-family:'DM Sans',sans-serif;font-size:26px;font-weight:800;color:white;letter-spacing:3px;">MM</span>
-        <span style="font-family:'DM Sans',sans-serif;font-size:26px;font-weight:800;color:#E53935;letter-spacing:3px;">U</span>
-        <div style="width:1.5px;height:20px;background:rgba(255,255,255,0.2);margin:0 8px;align-self:center;"></div>
-        <span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:white;letter-spacing:4px;">DELIVERY</span>
-      </div>
-    </div>
-
-    <!-- Tagline -->
-    <div class="sp-tag" style="text-align:center;">
-      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.2em;text-transform:uppercase;">Rider Portal · MMU Melaka · 2026</div>
-    </div>
+    <label class="field-label">Email</label>
+    <input class="field-input" type="email" id="auth-email" placeholder="rider@example.com">
+    <label class="field-label">Password</label>
+    <input class="field-input" type="password" id="auth-password" placeholder="••••••••">
+    <button class="auth-btn" id="auth-btn" onclick="doAuth()">Sign In</button>
   </div>
 </div>
 
-<!-- ═══════════════ LOGIN ═══════════════ -->
-<div id="login-screen" style="display:none;">
-
-  <!-- MIDI Logo -->
-  <div style="text-align:center;margin-bottom:28px;">
-    <div class="login-midi-icon" style="margin:0 auto 14px;">
-      <div style="font-family:'DM Sans',sans-serif;font-size:18px;font-weight:800;color:white;letter-spacing:2px;">MIDI</div>
-    </div>
-    <div class="login-midi-word">MIDI</div>
-    <div class="login-midi-sub">Rider Portal · MMU Melaka</div>
-  </div>
-
-  <div class="login-card">
-    <div class="login-card-title">Sign in to your account</div>
-
-    <div class="field">
-      <label>Phone Number</label>
-      <input type="tel" id="login-phone" placeholder="e.g. 0123456789">
-    </div>
-    <div class="field">
-      <label>Rider PIN</label>
-      <input type="password" id="rider-pin" placeholder="4-digit PIN" maxlength="4" style="letter-spacing:6px;">
-    </div>
-
-    <!-- Vehicle type for plate number -->
-    <div class="field" id="login-vehicle-field">
-      <label style="margin-bottom:8px;display:block;">Vehicle Type</label>
-      <div class="vehicle-chips">
-        <div class="v-chip selected" id="lv-motor" onclick="selectLoginVehicle('motorcycle')">
-          <span class="v-chip-icon">🏍️</span>
-          <span class="v-chip-label">Motorcycle</span>
-        </div>
-        <div class="v-chip" id="lv-bicycle" onclick="selectLoginVehicle('bicycle')">
-          <span class="v-chip-icon">🚲</span>
-          <span class="v-chip-label">Bicycle</span>
-        </div>
-        <div class="v-chip" id="lv-walking" onclick="selectLoginVehicle('walking')">
-          <span class="v-chip-icon">🚶</span>
-          <span class="v-chip-label">Walking</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="field" id="login-plate-field">
-      <label>Plate Number</label>
-      <input type="text" id="login-plate" placeholder="e.g. WXX 1234" style="text-transform:uppercase;letter-spacing:2px;">
-    </div>
-
-    <button class="login-btn" onclick="doRiderLogin()">Login →</button>
-    <div class="login-err" id="rider-err">❌ Phone not found or wrong PIN</div>
-    <div style="text-align:center;margin-top:20px;">
-      <span style="font-size:13px;color:var(--text3);">New rider? </span>
-      <span style="font-size:13px;color:var(--green);font-weight:600;cursor:pointer;" onclick="showRegister()">Register here →</span>
-    </div>
-  </div>
+<!-- ── Suspended ── -->
+<div id="suspended-screen">
+  <div class="suspended-icon">🚫</div>
+  <div class="suspended-title">Account Suspended</div>
+  <div class="suspended-sub">Your rider account has been suspended. Please contact MIDI support.</div>
+  <button class="logout-btn" style="margin-top:12px;" onclick="doLogout()">Sign Out</button>
 </div>
 
-<!-- ═══════════════ REGISTER ═══════════════ -->
-<div id="register-screen" style="display:none;">
-  <div class="reg-top">
-    <div class="rider-logo">📝</div>
-    <div class="login-brand">Join as <span>Rider</span></div>
-    <div class="login-sub">Fill in your details below</div>
-  </div>
-
-  <!-- Step indicators -->
-  <div class="reg-steps">
-    <div class="reg-step active" id="step-dot-1"></div>
-    <div class="reg-step" id="step-dot-2"></div>
-    <div class="reg-step" id="step-dot-3"></div>
-  </div>
-
-  <!-- Step 1: Personal Info -->
-  <div class="reg-card" id="reg-step-1">
-    <div class="reg-section-title">👤 Personal Info</div>
-    <div class="reg-section-sub">Step 1 of 3 — Basic details</div>
-    <div class="field">
-      <label>Full Name (as per IC)</label>
-      <input type="text" id="reg-name" placeholder="e.g. Ahmad Hafiz bin Razak">
-    </div>
-    <div class="field">
-      <label>Student ID</label>
-      <input type="text" id="reg-sid" placeholder="e.g. 1221234">
-    </div>
-    <div class="field">
-      <label>Age</label>
-      <input type="number" id="reg-age" placeholder="e.g. 21" min="18" max="30">
-    </div>
-    <div class="field">
-      <label>Phone Number</label>
-      <input type="tel" id="reg-phone" placeholder="e.g. 0123456789">
-    </div>
-    <div class="field">
-      <label>Set Your PIN (4 digits)</label>
-      <input type="password" id="reg-pin" placeholder="e.g. 1234" maxlength="4">
-    </div>
-    <button class="reg-btn" onclick="regNext(1)">Next →</button>
-    <button class="reg-btn secondary" onclick="showLogin()">← Back to Login</button>
-    <div class="login-err" id="reg-err-1"></div>
-  </div>
-
-  <!-- Step 2: Payment Info -->
-  <div class="reg-card" id="reg-step-2" style="display:none;">
-    <div class="reg-section-title">💳 Payment Info</div>
-    <div class="reg-section-sub">Step 2 of 3 — How you want to receive payment</div>
-    <div class="field">
-      <label>Choose Wallet</label>
-      <div class="wallet-chip selected" id="wc-tng" onclick="selectWallet('TNG')">
-        <span class="wallet-chip-icon">💰</span>
-        <div><div class="wallet-chip-name">Touch \'n Go eWallet</div><div class="wallet-chip-sub">Most popular in Malaysia</div></div>
-        <div class="wallet-radio"></div>
-      </div>
-      <div class="wallet-chip" id="wc-duitnow" onclick="selectWallet('DuitNow')">
-        <span class="wallet-chip-icon">🏦</span>
-        <div><div class="wallet-chip-name">DuitNow (Bank Transfer)</div><div class="wallet-chip-sub">Direct to bank account</div></div>
-        <div class="wallet-radio"></div>
-      </div>
-    </div>
-    <div class="field" id="tng-field">
-      <label>TNG Phone Number</label>
-      <input type="tel" id="reg-tng" placeholder="e.g. 0123456789">
-    </div>
-    <div class="field" id="bank-field" style="display:none;">
-      <label>Bank Account Number</label>
-      <input type="text" id="reg-bank" placeholder="e.g. 1234567890">
-      <div style="height:10px;"></div>
-      <label>Bank Name</label>
-      <input type="text" id="reg-bankname" placeholder="e.g. Maybank">
-    </div>
-    <button class="reg-btn" onclick="regNext(2)">Next →</button>
-    <button class="reg-btn secondary" onclick="regBack(1)">← Back</button>
-    <div class="login-err" id="reg-err-2"></div>
-  </div>
-
-  <!-- Step 3: Review & Submit -->
-  <div class="reg-card" id="reg-step-3" style="display:none;">
-    <div class="reg-section-title">✅ Review & Submit</div>
-    <div class="reg-section-sub">Step 3 of 3 — Confirm your details</div>
-    <div id="reg-review" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:14px;margin-bottom:16px;"></div>
-    <div class="pending-badge">
-      <span class="pb-icon">⏳</span>
-      <div class="pb-text">Your account will be <b>pending approval</b> until the boss activates it. You'll be able to login once approved.</div>
-    </div>
-    <button class="reg-btn" onclick="submitRegistration()">Submit Registration 🎉</button>
-    <button class="reg-btn secondary" onclick="regBack(2)">← Back</button>
-    <div class="login-err" id="reg-err-3"></div>
-  </div>
-</div>
-
-<!-- ═══════════════ MAIN APP ═══════════════ -->
+<!-- ── App ── -->
 <div id="app">
-
-  <!-- Top bar -->
-  <div class="app-topbar">
-    <div class="rider-avatar-sm" id="rider-avatar-initial">R</div>
-    <div class="rider-greeting">
-      <div class="rider-name-display">Hey, <span id="rider-name-display">Rider</span> 👋</div>
-      <div class="topbar-sub">MIDI Delivery · RM 2.00/order</div>
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-brand">MIDI</div>
+      <div class="rider-pill">🛵 Rider</div>
     </div>
-    <div class="online-toggle" id="online-toggle" onclick="toggleOnline()">
-      <div class="toggle-dot"></div>
-      <span class="toggle-label">OFFLINE</span>
-    </div>
-  </div>
-
-  <!-- Offline banner -->
-  <div class="offline-banner" id="offline-banner" style="display:flex;">
-    <span class="offline-icon">🔴</span>
-    <span class="offline-text">You're offline — tap to go online</span>
-  </div>
-
-  <!-- Earn chip -->
-  <div style="padding:14px 16px 0;" id="earn-strip">
-    <div class="earn-chip">
-      <div class="earn-label">Today's Earnings</div>
-      <div class="earn-amount" id="earn-today">RM 0</div>
-      <div class="earn-orders"><span id="earn-orders">0</span> deliveries · <b>RM 2.00</b> per order</div>
-    </div>
-  </div>
-
-  <!-- Bottom Navigation -->
-  <div class="bottom-nav">
-    <button class="nav-btn active" id="nav-available" onclick="switchTab('available',this)">
-      <div class="nav-btn-badge" id="new-order-dot"></div>
-      <div class="nav-btn-icon">🏠</div>
-      <div class="nav-btn-label">HOME</div>
-    </button>
-    <button class="nav-btn" id="nav-active" onclick="switchTab('active',this)">
-      <div class="nav-btn-icon">🛵</div>
-      <div class="nav-btn-label">ACTIVE</div>
-    </button>
-    <button class="nav-btn" id="nav-history" onclick="switchTab('history',this)">
-      <div class="nav-btn-icon">📋</div>
-      <div class="nav-btn-label">HISTORY</div>
-    </button>
-  </div>
-
-  <!-- Available -->
-  <div class="tab-content active" id="tab-available">
-    <div id="available-list">
-      <div class="empty-state">
-        <span class="empty-icon">📭</span>
-        <div class="empty-title">No orders yet</div>
-        <div class="empty-sub">Go online and wait for orders</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="status-toggle">
+        <span class="toggle-label" id="online-label">Offline</span>
+        <button class="toggle" id="online-toggle" onclick="toggleOnline()"></button>
       </div>
+      <button class="logout-btn" onclick="doLogout()">Out</button>
     </div>
   </div>
 
-  <!-- Active -->
-  <div class="tab-content" id="tab-active">
-    <div id="active-delivery-wrap">
-      <div class="empty-state">
-        <span class="empty-icon">🛵</span>
-        <div class="empty-title">No active delivery</div>
-        <div class="empty-sub">Accept an order to start riding</div>
-      </div>
-    </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('available',this)">🔔 Available</div>
+    <div class="tab" onclick="switchTab('mine',this)">📦 My Orders</div>
+    <div class="tab" onclick="switchTab('history',this)">✅ History</div>
   </div>
 
-  <!-- History -->
-  <div class="tab-content" id="tab-history">
-    <div class="history-stats">
-      <div class="history-stat">
-        <div class="history-stat-val" id="h-total-orders">0</div>
-        <div class="history-stat-label">Total Orders</div>
+  <div class="main">
+    <div id="tab-available">
+      <div id="available-empty" class="empty" style="display:none;">
+        <div class="empty-icon">🏍️</div>
+        <div class="empty-title">No orders available</div>
+        <div class="empty-sub">New delivery orders will appear here</div>
       </div>
-      <div class="history-stat">
-        <div class="history-stat-val" id="h-today">RM 0</div>
-        <div class="history-stat-label">Today</div>
-      </div>
-      <div class="history-stat">
-        <div class="history-stat-val" id="h-total-earn">RM 0</div>
-        <div class="history-stat-label">Total Earned</div>
-      </div>
-      <div class="history-stat">
-        <div class="history-stat-val" id="h-avg-earn">RM 0</div>
-        <div class="history-stat-label">Per Order Avg</div>
-      </div>
-    </div>
-    <div id="history-list"></div>
-  </div>
-
-</div>
-
-</body>>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MIDI — Rider Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-
-:root{
-  /* Colors */
-  --yellow:    #F7E96C;
-  --yellow-dk: #E8D44A;
-  --yellow-lt: #FFFBE8;
-  --yellow-dim:rgba(247,233,108,0.15);
-  --teal:      #0ABAB5;
-  --teal-lt:   #E6F9F8;
-  --teal-dim:  rgba(10,186,181,0.12);
-  --bg:        #F4F5F7;
-  --bg2:       #FFFFFF;
-  --bg3:       #ECEEF2;
-  --card:      #FFFFFF;
-  --border:    rgba(0,0,0,0.07);
-  --border2:   rgba(0,0,0,0.12);
-  --text:      #1A1A1A;
-  --text2:     #555B6B;
-  --text3:     #9AA0B0;
-  --green:     #16A34A;
-  --green-lt:  #DCFCE7;
-  --orange:    #EA580C;
-  --orange-lt: #FFF0E6;
-  --blue:      #2563EB;
-  --blue-lt:   #EFF6FF;
-  --red:       #DC2626;
-  --red-lt:    #FEF2F2;
-
-  /* Spacing */
-  --r:   20px;
-  --r2:  14px;
-  --r3:  10px;
-  --r-full: 100px;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
-  --shadow:    0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.06);
-  --shadow-lg: 0 4px 16px rgba(0,0,0,0.08), 0 16px 48px rgba(0,0,0,0.08);
-  --shadow-yellow: 0 4px 20px rgba(247,233,108,0.5);
-  --shadow-teal:   0 4px 20px rgba(10,186,181,0.35);
-}
-
-body{
-  font-family:'Inter',sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;min-height:100dvh;
-  max-width:430px;
-  margin:0 auto;
-  overflow-x:hidden;
-  -webkit-font-smoothing:antialiased;
-}
-
-/* ═══════════════════════════════════════
-   SPLASH SCREEN (keep dark for brand)
-═══════════════════════════════════════ */
-#splash-screen{
-  position:fixed;inset:0;z-index:999;
-  background:#0D1826;
-  display:flex;align-items:center;justify-content:center;flex-direction:column;
-}
-@keyframes splashIconIn{0%{opacity:0;transform:scale(0.7);}65%{opacity:1;transform:scale(1.05);}100%{opacity:1;transform:scale(1);}}
-@keyframes splashWordIn{0%{opacity:0;transform:translateY(14px);}100%{opacity:1;transform:translateY(0);}}
-@keyframes railShoot{0%{transform:scaleX(0);transform-origin:right;opacity:0;}100%{transform:scaleX(1);transform-origin:right;opacity:1;}}
-@keyframes arrowIn{0%{opacity:0;transform:translateX(-16px);}100%{opacity:1;transform:translateX(0);}}
-@keyframes mmuIn{0%{opacity:0;transform:translateX(-10px);}100%{opacity:1;transform:translateX(0);}}
-@keyframes tagIn{0%{opacity:0;}100%{opacity:1;}}
-@keyframes splashFadeOut{0%{opacity:1;}100%{opacity:0;pointer-events:none;}}
-.sp-icon {animation:splashIconIn  0.55s cubic-bezier(.34,1.56,.64,1) 0.1s  both;}
-.sp-word {animation:splashWordIn  0.45s ease                         0.7s  both;}
-.sp-rail {animation:railShoot     0.4s  cubic-bezier(.4,0,.2,1)      1.15s both;}
-.sp-arrow{animation:arrowIn       0.25s ease                         1.55s both;}
-.sp-mmu  {animation:mmuIn         0.4s  ease                         1.6s  both;}
-.sp-tag  {animation:tagIn         0.5s  ease                         2.1s  both;}
-.sp-out  {animation:splashFadeOut 0.5s  ease                         2.8s  both;animation-fill-mode:forwards;}
-
-/* ═══════════════════════════════════════
-   LOGIN
-═══════════════════════════════════════ */
-#login-screen{
-  min-height:100vh;min-height:100dvh;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:40px 24px 60px;
-  background:var(--bg);
-}
-.login-midi-icon{
-  width:88px;height:88px;border-radius:24px;
-  background:#1B3FA0;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 12px 40px rgba(27,63,160,0.25);
-  margin-bottom:16px;
-}
-.login-midi-word{
-  font-size:36px;font-weight:800;
-  color:#1A1A1A;letter-spacing:8px;line-height:1;margin-bottom:4px;
-}
-.login-midi-sub{
-  font-size:11px;font-weight:600;color:var(--text3);
-  letter-spacing:0.2em;text-transform:uppercase;margin-bottom:32px;
-}
-.login-card{
-  width:100%;background:var(--card);
-  border:1px solid var(--border);border-radius:var(--r);
-  padding:28px 24px;box-shadow:var(--shadow-lg);
-}
-.login-card-title{
-  font-size:16px;font-weight:700;color:var(--text);
-  margin-bottom:20px;letter-spacing:-0.01em;
-}
-
-/* Fields */
-.field{margin-bottom:16px;}
-.field label{
-  font-size:11px;font-weight:600;color:var(--text3);
-  letter-spacing:0.08em;text-transform:uppercase;
-  display:block;margin-bottom:8px;
-}
-.field input,.field select{
-  width:100%;background:var(--bg);border:1.5px solid var(--border2);
-  border-radius:var(--r2);padding:14px 16px;
-  font-family:'Inter',sans-serif;font-size:15px;font-weight:500;
-  color:var(--text);outline:none;transition:all .2s;
-}
-.field input:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px var(--teal-dim);}
-.field input::placeholder{color:var(--text3);}
-
-/* Login button */
-.login-btn{
-  width:100%;background:var(--yellow);color:#1A1A1A;
-  border:none;border-radius:var(--r2);padding:16px;
-  font-family:'Inter',sans-serif;font-size:15px;font-weight:700;
-  cursor:pointer;margin-top:8px;
-  box-shadow:var(--shadow-yellow);
-  transition:all .15s;letter-spacing:-0.01em;
-}
-.login-btn:active{transform:scale(.97);box-shadow:none;}
-.login-err{font-size:13px;color:var(--red);text-align:center;margin-top:10px;display:none;}
-
-/* Vehicle chips */
-.vehicle-chips{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
-.v-chip{
-  background:var(--bg);border:1.5px solid var(--border2);
-  border-radius:var(--r2);padding:12px 6px;text-align:center;
-  cursor:pointer;transition:all .15s;
-}
-.v-chip.selected{border-color:var(--teal);background:var(--teal-lt);}
-.v-chip-icon{font-size:22px;display:block;margin-bottom:4px;}
-.v-chip-label{font-size:11px;font-weight:600;color:var(--text2);}
-.v-chip.selected .v-chip-label{color:var(--teal);}
-
-/* Register screens */
-#register-screen{
-  min-height:100vh;display:flex;flex-direction:column;
-  align-items:center;justify-content:flex-start;
-  padding:40px 24px 60px;background:var(--bg);overflow-y:auto;
-}
-.reg-top{text-align:center;margin-bottom:24px;}
-.reg-steps{display:flex;gap:6px;justify-content:center;margin-bottom:20px;}
-.reg-step{width:28px;height:4px;border-radius:2px;background:var(--border2);transition:background .3s;}
-.reg-step.done{background:var(--teal);}
-.reg-step.active{background:var(--teal);opacity:0.5;}
-.reg-card{
-  width:100%;background:var(--card);
-  border:1px solid var(--border);border-radius:var(--r);
-  padding:24px 20px;box-shadow:var(--shadow);
-}
-.reg-section-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;}
-.reg-section-sub{font-size:13px;color:var(--text3);margin-bottom:20px;}
-.reg-btn{
-  width:100%;background:var(--yellow);color:#1A1A1A;
-  border:none;border-radius:var(--r2);padding:15px;
-  font-family:'Inter',sans-serif;font-size:15px;font-weight:700;
-  cursor:pointer;margin-top:8px;
-  box-shadow:var(--shadow-yellow);transition:all .15s;
-}
-.reg-btn:active{transform:scale(.98);}
-.reg-btn.secondary{
-  background:var(--bg);color:var(--text2);
-  border:1.5px solid var(--border2);box-shadow:none;
-}
-.wallet-chip{
-  display:flex;align-items:center;gap:12px;
-  background:var(--bg);border:1.5px solid var(--border2);
-  border-radius:var(--r2);padding:14px 16px;cursor:pointer;
-  transition:all .15s;margin-bottom:8px;
-}
-.wallet-chip.selected{border-color:var(--teal);background:var(--teal-lt);}
-.wallet-chip-icon{font-size:22px;}
-.wallet-chip-name{font-size:14px;font-weight:600;color:var(--text);}
-.wallet-chip-sub{font-size:11px;color:var(--text3);}
-.wallet-radio{
-  width:20px;height:20px;border-radius:50%;
-  border:1.5px solid var(--border2);margin-left:auto;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;
-}
-.wallet-chip.selected .wallet-radio{background:var(--teal);border-color:var(--teal);}
-.wallet-chip.selected .wallet-radio::after{content:'';width:7px;height:7px;border-radius:50%;background:#fff;}
-.pending-badge{
-  background:var(--orange-lt);border:1px solid rgba(234,88,12,0.2);
-  border-radius:var(--r2);padding:14px 16px;
-  display:flex;align-items:center;gap:10px;margin-bottom:12px;
-}
-.pending-badge .pb-icon{font-size:20px;}
-.pending-badge .pb-text{font-size:13px;color:var(--orange);font-weight:600;line-height:1.5;}
-
-/* ═══════════════════════════════════════
-   APP SHELL
-═══════════════════════════════════════ */
-#app{
-  display:none;flex-direction:column;
-  min-height:100vh;min-height:100dvh;
-  background:var(--bg);
-}
-
-/* ── Top header ── */
-.app-topbar{
-  background:var(--card);
-  padding:16px 20px 14px;
-  display:flex;align-items:center;gap:12px;
-  border-bottom:1px solid var(--border);
-  position:sticky;top:0;z-index:50;
-}
-.rider-avatar-sm{
-  width:38px;height:38px;border-radius:50%;
-  background:var(--yellow);
-  display:flex;align-items:center;justify-content:center;
-  font-size:16px;font-weight:800;color:#1A1A1A;
-  flex-shrink:0;
-}
-.app-topbar .rider-greeting{
-  flex:1;
-}
-.rider-name-display{
-  font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.01em;
-}
-.topbar-sub{font-size:12px;color:var(--text3);margin-top:1px;}
-
-/* Online toggle */
-#online-toggle{
-  display:flex;align-items:center;gap:8px;
-  background:var(--bg3);border:none;
-  border-radius:var(--r-full);padding:8px 16px;
-  cursor:pointer;transition:all .2s;
-  font-family:'Inter',sans-serif;font-size:12px;font-weight:700;
-  color:var(--text3);letter-spacing:0.04em;
-}
-#online-toggle.online{
-  background:var(--green-lt);color:var(--green);
-  box-shadow:0 0 0 3px rgba(22,163,74,0.12);
-}
-.toggle-dot{
-  width:8px;height:8px;border-radius:50%;
-  background:var(--text3);transition:background .2s;
-  flex-shrink:0;
-}
-#online-toggle.online .toggle-dot{
-  background:var(--green);
-  box-shadow:0 0 0 3px rgba(22,163,74,0.2);
-  animation:pulse-green 2s infinite;
-}
-@keyframes pulse-green{0%,100%{box-shadow:0 0 0 3px rgba(22,163,74,0.2);}50%{box-shadow:0 0 0 5px rgba(22,163,74,0.05);}}
-
-/* ── Bottom nav ── */
-.bottom-nav{
-  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:430px;
-  background:var(--card);
-  border-top:1px solid var(--border);
-  display:flex;
-  padding-bottom:env(safe-area-inset-bottom);
-  z-index:100;
-}
-.nav-btn{
-  flex:1;display:flex;flex-direction:column;align-items:center;
-  padding:12px 0 10px;cursor:pointer;gap:4px;
-  transition:all .15s;position:relative;border:none;background:none;
-  font-family:'Inter',sans-serif;
-}
-.nav-btn.active .nav-btn-icon{color:var(--teal);}
-.nav-btn.active .nav-btn-label{color:var(--teal);font-weight:700;}
-.nav-btn-icon{
-  font-size:20px;color:var(--text3);
-  transition:all .15s;line-height:1;
-}
-.nav-btn-label{
-  font-size:10px;font-weight:500;color:var(--text3);
-  letter-spacing:0.04em;text-transform:uppercase;
-}
-.nav-btn-badge{
-  position:absolute;top:8px;right:calc(50% - 18px);
-  width:8px;height:8px;border-radius:50%;background:var(--orange);
-  display:none;
-  box-shadow:0 0 0 2px var(--card);
-}
-#nav-active .nav-btn-badge{display:none;}
-
-/* Tab content */
-.tab-content{display:none;flex:1;overflow-y:auto;padding:16px 16px 100px;}
-.tab-content.active{display:block;}
-
-/* ── Offline banner ── */
-#offline-banner{
-  display:flex;align-items:center;gap:12px;
-  background:var(--orange-lt);border-bottom:1px solid rgba(234,88,12,0.15);
-  padding:12px 20px;
-}
-.offline-icon{font-size:18px;}
-.offline-text{font-size:13px;color:var(--orange);font-weight:600;}
-
-/* ── Earnings chip ── */
-.earn-chip{
-  background:linear-gradient(135deg,var(--yellow),var(--yellow-dk));
-  border-radius:var(--r);padding:20px;margin-bottom:16px;
-  position:relative;overflow:hidden;
-  box-shadow:var(--shadow-yellow);
-}
-.earn-chip::before{
-  content:'';position:absolute;top:-30px;right:-30px;
-  width:100px;height:100px;border-radius:50%;
-  background:rgba(255,255,255,0.2);
-}
-.earn-label{font-size:11px;font-weight:600;color:rgba(0,0,0,0.5);letter-spacing:0.1em;text-transform:uppercase;}
-.earn-amount{font-size:32px;font-weight:800;color:#1A1A1A;letter-spacing:-0.02em;margin:4px 0;}
-.earn-orders{font-size:13px;color:rgba(0,0,0,0.5);font-weight:500;}
-
-/* ── Order cards (Available) ── */
-.order-card{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:var(--r);padding:18px;margin-bottom:10px;
-  box-shadow:var(--shadow-sm);
-  animation:cardIn .25s ease;transition:transform .15s,box-shadow .15s;
-}
-.order-card:active{transform:scale(0.99);box-shadow:var(--shadow-sm);}
-@keyframes cardIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-.order-card-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;}
-.order-num-badge{
-  background:var(--bg);border:1px solid var(--border2);
-  border-radius:var(--r3);padding:6px 10px;flex-shrink:0;
-}
-.order-num-badge .num{
-  font-size:16px;font-weight:800;color:var(--text);display:block;letter-spacing:-0.01em;
-}
-.order-num-badge .code{font-size:9px;color:var(--text3);letter-spacing:0.06em;display:block;}
-.order-header-info{flex:1;}
-.order-customer-name{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.01em;}
-.order-meta-row{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;}
-.order-time{font-size:11px;color:var(--text3);}
-.status-chip{
-  font-size:10px;font-weight:700;padding:3px 8px;
-  border-radius:var(--r-full);letter-spacing:0.04em;
-}
-.chip-ready{background:var(--green-lt);color:var(--green);}
-.chip-delivering{background:var(--blue-lt);color:var(--blue);}
-.order-total-badge{
-  font-size:18px;font-weight:800;color:var(--teal);
-  letter-spacing:-0.02em;flex-shrink:0;
-}
-.order-card-body{border-top:1px solid var(--border);padding-top:12px;}
-.order-items-list{
-  font-size:13px;color:var(--text2);line-height:1.8;
-  margin-bottom:10px;font-weight:500;
-}
-.address-row{
-  display:flex;align-items:flex-start;gap:8px;
-  margin-bottom:8px;
-}
-.address-icon{
-  width:28px;height:28px;background:var(--teal-lt);
-  border-radius:8px;display:flex;align-items:center;justify-content:center;
-  font-size:14px;flex-shrink:0;
-}
-.address-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;}
-.address-text{font-size:13px;font-weight:600;color:var(--text);}
-.phone-row{font-size:13px;color:var(--teal);margin-bottom:12px;font-weight:500;}
-.phone-row a{color:var(--teal);text-decoration:none;}
-.action-row{display:flex;gap:8px;}
-
-/* ── Buttons ── */
-.action-btn{
-  flex:1;border:none;border-radius:var(--r2);padding:14px;
-  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;
-  cursor:pointer;transition:all .15s;text-align:center;
-  letter-spacing:-0.01em;
-}
-.action-btn:active{transform:scale(.97);}
-.btn-accept{
-  background:var(--yellow);color:#1A1A1A;
-  box-shadow:var(--shadow-yellow);
-}
-.btn-pickup{
-  background:var(--teal);color:#fff;
-  box-shadow:var(--shadow-teal);
-  font-size:15px;padding:16px;
-}
-.btn-deliver{
-  background:linear-gradient(135deg,var(--teal),#08A09B);color:#fff;
-  box-shadow:var(--shadow-teal);
-  font-size:15px;padding:16px;
-}
-.btn-nav{
-  background:var(--bg);color:var(--text2);
-  border:1.5px solid var(--border2);
-  font-size:13px;padding:14px;
-}
-
-/* ── Active delivery ── */
-.active-delivery{
-  background:var(--card);border-radius:var(--r);
-  padding:20px;margin-bottom:12px;
-  box-shadow:var(--shadow);border:1px solid var(--border);
-}
-.active-label{
-  display:inline-flex;align-items:center;gap:6px;
-  background:var(--teal);color:#fff;
-  border-radius:var(--r-full);padding:5px 12px;
-  font-size:11px;font-weight:700;letter-spacing:0.06em;
-  margin-bottom:16px;
-}
-.active-pulse{
-  width:7px;height:7px;border-radius:50%;background:#fff;
-  animation:pulse-white 1.5s infinite;
-}
-@keyframes pulse-white{0%,100%{opacity:1;}50%{opacity:0.4;}}
-
-/* ── Status steps ── */
-.status-step{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;
-  display:flex;align-items:center;gap:12px;
-}
-.step-icon{
-  width:36px;height:36px;border-radius:10px;
-  background:var(--bg);display:flex;align-items:center;justify-content:center;
-  font-size:16px;flex-shrink:0;
-}
-.step-icon.done{background:var(--green-lt);}
-.step-label{font-size:13px;font-weight:600;color:var(--text2);}
-.step-label.done{color:var(--green);}
-.step-check{margin-left:auto;font-size:14px;}
-
-/* ── History ── */
-.history-item{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:var(--r2);padding:16px;margin-bottom:8px;
-  display:flex;align-items:center;gap:12px;
-  box-shadow:var(--shadow-sm);
-}
-.history-dot{
-  width:10px;height:10px;border-radius:50%;
-  background:var(--teal);flex-shrink:0;
-}
-.history-info{flex:1;}
-.hi-name{font-size:14px;font-weight:700;color:var(--text);}
-.hi-meta{font-size:12px;color:var(--text3);margin-top:3px;}
-.hi-earn{
-  font-size:16px;font-weight:800;color:var(--teal);
-  letter-spacing:-0.01em;
-}
-
-/* ── History stats ── */
-.history-stats{
-  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;
-}
-.history-stat{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:var(--r2);padding:16px;
-  box-shadow:var(--shadow-sm);
-}
-.history-stat-val{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.02em;}
-.history-stat-label{font-size:11px;color:var(--text3);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;}
-
-/* unpaid earnings banner */
-.unpaid-banner{
-  background:linear-gradient(135deg,var(--yellow),var(--yellow-dk));
-  border-radius:var(--r);padding:18px 20px;margin-bottom:16px;
-  display:flex;align-items:center;gap:14px;
-  box-shadow:var(--shadow-yellow);
-}
-.unpaid-banner .ub-icon{font-size:32px;}
-.unpaid-banner .ub-label{font-size:11px;font-weight:600;color:rgba(0,0,0,0.5);letter-spacing:0.08em;text-transform:uppercase;}
-.unpaid-banner .ub-amount{font-size:26px;font-weight:800;color:#1A1A1A;letter-spacing:-0.02em;}
-.unpaid-banner .ub-sub{font-size:12px;color:rgba(0,0,0,0.45);}
-
-/* ── Empty state ── */
-.empty-state{text-align:center;padding:60px 20px;}
-.empty-icon{font-size:56px;margin-bottom:16px;display:block;}
-.empty-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:-0.01em;}
-.empty-sub{font-size:14px;color:var(--text3);line-height:1.6;}
-
-/* ── Toast ── */
-#toast{
-  position:fixed;bottom:90px;left:50%;
-  transform:translateX(-50%) translateY(16px);
-  background:#1A1A1A;color:#fff;
-  padding:12px 22px;border-radius:var(--r-full);
-  font-size:13px;font-weight:600;
-  white-space:nowrap;opacity:0;
-  transition:all .3s cubic-bezier(.34,1.56,.64,1);
-  pointer-events:none;z-index:999;
-  box-shadow:0 8px 32px rgba(0,0,0,0.2);
-}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-/* Skeleton loader */
-@keyframes shimmer{0%{background-position:-400px 0;}100%{background-position:400px 0;}}
-.skeleton{
-  background:linear-gradient(90deg,var(--bg3) 25%,var(--bg2) 37%,var(--bg3) 63%);
-  background-size:800px 100%;
-  animation:shimmer 1.4s infinite;
-  border-radius:8px;
-}
-</style>
-</head>
-<body>
-
-<!-- ═══════════════ SPLASH ═══════════════ -->
-<div id="splash-screen" class="sp-out">
-  <div style="display:flex;flex-direction:column;align-items:center;gap:0;padding:0 28px;">
-
-    <!-- Icon -->
-    <div class="sp-icon" style="margin-bottom:24px;">
-      <div style="width:90px;height:90px;border-radius:24px;background:#1B3FA0;display:flex;align-items:center;justify-content:center;box-shadow:0 16px 48px rgba(27,63,160,0.5);">
-        <div style="font-family:'DM Sans',sans-serif;font-size:22px;font-weight:800;color:white;letter-spacing:3px;">MIDI</div>
-      </div>
+      <div id="available-list"></div>
     </div>
 
-    <!-- MIDI wordmark -->
-    <div class="sp-word" style="margin-bottom:8px;">
-      <div style="font-family:'DM Sans',sans-serif;font-size:50px;font-weight:800;color:white;letter-spacing:12px;line-height:1;">MIDI</div>
-      <div style="display:flex;justify-content:flex-end;margin-top:5px;">
-        <div style="width:62px;height:4px;background:#4D9FFF;border-radius:2px;"></div>
-      </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:3px;">
-        <div style="width:46px;height:3px;background:#4D9FFF;border-radius:2px;opacity:0.5;"></div>
-      </div>
-    </div>
-
-    <!-- Expansion -->
-    <div style="display:flex;align-items:center;gap:8px;margin:20px 0 24px;">
-      <div class="sp-rail" style="display:flex;flex-direction:column;gap:9px;">
-        <div style="width:55px;height:2.5px;border-radius:2px;background:linear-gradient(to left,#4D9FFF,rgba(77,159,255,0));"></div>
-        <div style="width:55px;height:2.5px;border-radius:2px;background:linear-gradient(to left,#4D9FFF,rgba(77,159,255,0));"></div>
-      </div>
-      <div class="sp-arrow">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d="M2 9H16M16 9L10 3M16 9L10 15" stroke="#4D9FFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div class="sp-mmu" style="display:flex;align-items:baseline;gap:0;">
-        <span style="font-family:'DM Sans',sans-serif;font-size:26px;font-weight:800;color:white;letter-spacing:3px;">MM</span>
-        <span style="font-family:'DM Sans',sans-serif;font-size:26px;font-weight:800;color:#E53935;letter-spacing:3px;">U</span>
-        <div style="width:1.5px;height:20px;background:rgba(255,255,255,0.2);margin:0 8px;align-self:center;"></div>
-        <span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:white;letter-spacing:4px;">DELIVERY</span>
-      </div>
-    </div>
-
-    <!-- Tagline -->
-    <div class="sp-tag" style="text-align:center;">
-      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.2em;text-transform:uppercase;">Rider Portal · MMU Melaka · 2026</div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════ LOGIN ═══════════════ -->
-<div id="login-screen" style="display:none;">
-
-  <!-- MIDI Logo -->
-  <div style="text-align:center;margin-bottom:28px;">
-    <div class="login-midi-icon" style="margin:0 auto 14px;">
-      <div style="font-family:'DM Sans',sans-serif;font-size:18px;font-weight:800;color:white;letter-spacing:2px;">MIDI</div>
-    </div>
-    <div class="login-midi-word">MIDI</div>
-    <div class="login-midi-sub">Rider Portal · MMU Melaka</div>
-  </div>
-
-  <div class="login-card">
-    <div class="login-card-title">Sign in to your account</div>
-
-    <div class="field">
-      <label>Phone Number</label>
-      <input type="tel" id="login-phone" placeholder="e.g. 0123456789">
-    </div>
-    <div class="field">
-      <label>Rider PIN</label>
-      <input type="password" id="rider-pin" placeholder="4-digit PIN" maxlength="4" style="letter-spacing:6px;">
-    </div>
-
-    <!-- Vehicle type for plate number -->
-    <div class="field" id="login-vehicle-field">
-      <label style="margin-bottom:8px;display:block;">Vehicle Type</label>
-      <div class="vehicle-chips">
-        <div class="v-chip selected" id="lv-motor" onclick="selectLoginVehicle('motorcycle')">
-          <span class="v-chip-icon">🏍️</span>
-          <span class="v-chip-label">Motorcycle</span>
-        </div>
-        <div class="v-chip" id="lv-bicycle" onclick="selectLoginVehicle('bicycle')">
-          <span class="v-chip-icon">🚲</span>
-          <span class="v-chip-label">Bicycle</span>
-        </div>
-        <div class="v-chip" id="lv-walking" onclick="selectLoginVehicle('walking')">
-          <span class="v-chip-icon">🚶</span>
-          <span class="v-chip-label">Walking</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="field" id="login-plate-field">
-      <label>Plate Number</label>
-      <input type="text" id="login-plate" placeholder="e.g. WXX 1234" style="text-transform:uppercase;letter-spacing:2px;">
-    </div>
-
-    <button class="login-btn" onclick="doRiderLogin()">Login →</button>
-    <div class="login-err" id="rider-err">❌ Phone not found or wrong PIN</div>
-    <div style="text-align:center;margin-top:20px;">
-      <span style="font-size:13px;color:var(--text3);">New rider? </span>
-      <span style="font-size:13px;color:var(--green);font-weight:600;cursor:pointer;" onclick="showRegister()">Register here →</span>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════ REGISTER ═══════════════ -->
-<div id="register-screen" style="display:none;">
-  <div class="reg-top">
-    <div class="rider-logo">📝</div>
-    <div class="login-brand">Join as <span>Rider</span></div>
-    <div class="login-sub">Fill in your details below</div>
-  </div>
-
-  <!-- Step indicators -->
-  <div class="reg-steps">
-    <div class="reg-step active" id="step-dot-1"></div>
-    <div class="reg-step" id="step-dot-2"></div>
-    <div class="reg-step" id="step-dot-3"></div>
-  </div>
-
-  <!-- Step 1: Personal Info -->
-  <div class="reg-card" id="reg-step-1">
-    <div class="reg-section-title">👤 Personal Info</div>
-    <div class="reg-section-sub">Step 1 of 3 — Basic details</div>
-    <div class="field">
-      <label>Full Name (as per IC)</label>
-      <input type="text" id="reg-name" placeholder="e.g. Ahmad Hafiz bin Razak">
-    </div>
-    <div class="field">
-      <label>Student ID</label>
-      <input type="text" id="reg-sid" placeholder="e.g. 1221234">
-    </div>
-    <div class="field">
-      <label>Age</label>
-      <input type="number" id="reg-age" placeholder="e.g. 21" min="18" max="30">
-    </div>
-    <div class="field">
-      <label>Phone Number</label>
-      <input type="tel" id="reg-phone" placeholder="e.g. 0123456789">
-    </div>
-    <div class="field">
-      <label>Set Your PIN (4 digits)</label>
-      <input type="password" id="reg-pin" placeholder="e.g. 1234" maxlength="4">
-    </div>
-    <button class="reg-btn" onclick="regNext(1)">Next →</button>
-    <button class="reg-btn secondary" onclick="showLogin()">← Back to Login</button>
-    <div class="login-err" id="reg-err-1"></div>
-  </div>
-
-  <!-- Step 2: Payment Info -->
-  <div class="reg-card" id="reg-step-2" style="display:none;">
-    <div class="reg-section-title">💳 Payment Info</div>
-    <div class="reg-section-sub">Step 2 of 3 — How you want to receive payment</div>
-    <div class="field">
-      <label>Choose Wallet</label>
-      <div class="wallet-chip selected" id="wc-tng" onclick="selectWallet('TNG')">
-        <span class="wallet-chip-icon">💰</span>
-        <div><div class="wallet-chip-name">Touch \'n Go eWallet</div><div class="wallet-chip-sub">Most popular in Malaysia</div></div>
-        <div class="wallet-radio"></div>
-      </div>
-      <div class="wallet-chip" id="wc-duitnow" onclick="selectWallet('DuitNow')">
-        <span class="wallet-chip-icon">🏦</span>
-        <div><div class="wallet-chip-name">DuitNow (Bank Transfer)</div><div class="wallet-chip-sub">Direct to bank account</div></div>
-        <div class="wallet-radio"></div>
-      </div>
-    </div>
-    <div class="field" id="tng-field">
-      <label>TNG Phone Number</label>
-      <input type="tel" id="reg-tng" placeholder="e.g. 0123456789">
-    </div>
-    <div class="field" id="bank-field" style="display:none;">
-      <label>Bank Account Number</label>
-      <input type="text" id="reg-bank" placeholder="e.g. 1234567890">
-      <div style="height:10px;"></div>
-      <label>Bank Name</label>
-      <input type="text" id="reg-bankname" placeholder="e.g. Maybank">
-    </div>
-    <button class="reg-btn" onclick="regNext(2)">Next →</button>
-    <button class="reg-btn secondary" onclick="regBack(1)">← Back</button>
-    <div class="login-err" id="reg-err-2"></div>
-  </div>
-
-  <!-- Step 3: Review & Submit -->
-  <div class="reg-card" id="reg-step-3" style="display:none;">
-    <div class="reg-section-title">✅ Review & Submit</div>
-    <div class="reg-section-sub">Step 3 of 3 — Confirm your details</div>
-    <div id="reg-review" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:14px;margin-bottom:16px;"></div>
-    <div class="pending-badge">
-      <span class="pb-icon">⏳</span>
-      <div class="pb-text">Your account will be <b>pending approval</b> until the boss activates it. You'll be able to login once approved.</div>
-    </div>
-    <button class="reg-btn" onclick="submitRegistration()">Submit Registration 🎉</button>
-    <button class="reg-btn secondary" onclick="regBack(2)">← Back</button>
-    <div class="login-err" id="reg-err-3"></div>
-  </div>
-</div>
-
-<!-- ═══════════════ MAIN APP ═══════════════ -->
-<div id="app">
-
-  <!-- Status bar -->
-  <div class="status-bar">
-    <div class="status-bar-left">
-      <div class="rider-logo" style="width:32px;height:32px;border-radius:10px;font-size:16px;margin:0;">🛵</div>
-      <div class="rider-greeting">Hey, <span id="rider-name-display">Rider</span></div>
-    </div>
-    <div class="online-toggle" id="online-toggle" onclick="toggleOnline()">
-      <div class="toggle-dot"></div>
-      <span class="toggle-label">OFFLINE</span>
-    </div>
-  </div>
-
-  <!-- Earnings strip -->
-  <div class="earnings-strip">
-    <div class="earn-item">
-      <span class="earn-val" id="earn-today">RM 0</span>
-      <span class="earn-label">Today</span>
-    </div>
-    <div class="earn-item">
-      <span class="earn-val" id="earn-orders">0</span>
-      <span class="earn-label">Deliveries</span>
-    </div>
-    <div class="earn-item">
-      <span class="earn-val" id="earn-rate">RM 3</span>
-      <span class="earn-label">Per Order</span>
-    </div>
-  </div>
-
-  <!-- Tabs -->
-  <div class="tabs-bar">
-    <button class="tab-btn active" onclick="switchTab('available',this)">
-      Available <span id="avail-count"></span>
-    </button>
-    <button class="tab-btn" onclick="switchTab('active',this)">Active</button>
-    <button class="tab-btn" onclick="switchTab('history',this)">History</button>
-  </div>
-
-  <!-- ── Available Orders ── -->
-  <div class="tab-content active" id="tab-available">
-    <div class="offline-banner" id="offline-banner">
-      <span class="ob-icon">🔴</span>
-      <span class="ob-text">You\'re offline — toggle Online to receive orders</span>
-    </div>
-    <div id="available-list">
-      <div class="empty-state">
+    <div id="tab-mine" style="display:none;">
+      <div id="mine-empty" class="empty" style="display:none;">
         <div class="empty-icon">📭</div>
-        <div class="empty-title">No orders yet</div>
-        <div class="empty-sub">Go online and wait for<br>delivery orders to appear here</div>
+        <div class="empty-title">No active orders</div>
+        <div class="empty-sub">Grab an available order to get started</div>
       </div>
+      <div id="mine-list"></div>
+    </div>
+
+    <div id="tab-history" style="display:none;">
+      <div class="stats-row">
+        <div class="stat-card green"><div class="stat-val" id="stat-delivered">0</div><div class="stat-label">Delivered</div></div>
+        <div class="stat-card indigo"><div class="stat-val" id="stat-earning">RM 0</div><div class="stat-label">Earnings</div></div>
+      </div>
+      <div class="section-title">Completed Orders</div>
+      <div id="history-empty" class="empty" style="display:none;">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">No completed orders yet</div>
+      </div>
+      <div id="history-list"></div>
     </div>
   </div>
+</div>
 
-  <!-- ── Active Delivery ── -->
-  <div class="tab-content" id="tab-active">
-    <div id="active-delivery-wrap">
-      <div class="empty-state">
-        <div class="empty-icon">🛵</div>
-        <div class="empty-title">No active delivery</div>
-        <div class="empty-sub">Accept an order from the<br>Available tab to start riding</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── History ── -->
-  <div class="tab-content" id="tab-history">
-    <div class="stats-grid">
-      <div class="stat-box" style="animation-delay:.05s">
-        <span class="sv" id="h-total-earn">RM 0</span>
-        <span class="sl">Total Earned</span>
-      </div>
-      <div class="stat-box" style="animation-delay:.1s">
-        <span class="sv" id="h-total-orders">0</span>
-        <span class="sl">Total Deliveries</span>
-      </div>
-      <div class="stat-box" style="animation-delay:.15s">
-        <span class="sv" id="h-today">RM 0</span>
-        <span class="sl">Today</span>
-      </div>
-      <div class="stat-box" style="animation-delay:.2s">
-        <span class="sv" id="h-avg-earn">RM 0</span>
-        <span class="sl">Avg Per Order</span>
-      </div>
-    </div>
-    <div id="history-list">
-      <div class="empty-state">
-        <div class="empty-icon">📊</div>
-        <div class="empty-title">No deliveries yet</div>
-        <div class="empty-sub">Completed orders appear here</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bottom nav -->
-  <div class="bottom-nav">
-    <button class="nav-btn active" onclick="switchTab('available',this)" id="nav-available">
-      <span class="ni">📦</span>
-      <span class="nl">Orders</span>
-      <div class="nav-dot" id="new-order-dot"></div>
-    </button>
-    <button class="nav-btn" onclick="switchTab('active',this)" id="nav-active">
-      <span class="ni">🛵</span>
-      <span class="nl">Active</span>
-    </button>
-    <button class="nav-btn" onclick="switchTab('history',this)" id="nav-history">
-      <span class="ni">📊</span>
-      <span class="nl">History</span>
-    </button>
-    <button class="nav-btn" onclick="doLogout()" id="nav-logout">
-      <span class="ni">👤</span>
-      <span class="nl">Logout</span>
-    </button>
-  </div>
-
-</div><!-- /app -->
-
-<!-- Toast -->
-<div class="toast" id="toast">✅ Done</div>
+<div class="toast" id="toast"></div>
 
 <script type="module">
-// ═══════════════════════════════════════════════════════
-//  FIREBASE SETUP
-// ═══════════════════════════════════════════════════════
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getFirestore, collection, doc, onSnapshot, updateDoc,
-  setDoc, getDoc, getDocs, query, orderBy,
-  arrayUnion, increment, serverTimestamp, where
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, query, where, onSnapshot, updateDoc, doc, serverTimestamp, setDoc, getDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCkFmMpScduIj1493VWQdDCOAaTUWnWEbk",
@@ -1681,613 +216,291 @@ const firebaseConfig = {
   messagingSenderId: "945529333130",
   appId: "1:945529333130:web:915bfd830b44de4e19d473"
 };
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
 
-// ═══════════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════════
-const DELIVERY_FEE = 2.00;
-const EARN_PER_ORDER = DELIVERY_FEE;
-let riderData        = null;  // full rider profile from Firestore
-let riderDocId       = '';
-let isOnline         = false;
-let allOrders        = [];
-let myActive         = null;
-let completedOrders  = [];
-let todayEarnings    = 0;
-let totalEarnings    = 0;
-let unsubOrders      = null;
-let unsubRider       = null;
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
 
-// ── Registration temp state ──
-let regInfo = { name:'', sid:'', age:'', phone:'', pin:'', wallet:'TNG', tng:'', bank:'', bankName:'' };
+let currentUser   = null;
+let riderDoc      = null;
+let isOnline      = false;
+let activeTab     = 'available';
+let authMode      = 'login';
+let allOrders     = [];
+let unsubOrders   = null;
 
-function nameToId(name){ return name.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,''); }
-function phoneToId(phone){ return 'rider_' + phone.replace(/[^0-9]/g,''); }
+// ── Auth tab ──
+window.switchAuthTab = (mode, el) => {
+  authMode = mode;
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('signup-fields').style.display = mode === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-btn').textContent = mode === 'signup' ? 'Create Account' : 'Sign In';
+  document.getElementById('auth-err').style.display = 'none';
+};
 
-// ═══════════════════════════════════════════════════════
-//  SPLASH → LOGIN
-// ═══════════════════════════════════════════════════════
-setTimeout(() => {
-  const splash = document.getElementById('splash-screen');
-  setTimeout(() => {
-    splash.style.display = 'none';
-    document.getElementById('login-screen').style.display = 'flex';
-  }, 500);
-}, 2800);
-
-// ═══════════════════════════════════════════════════════
-//  VEHICLE TYPE SELECTION (login)
-// ═══════════════════════════════════════════════════════
-let loginVehicle = 'motorcycle';
-
-function selectLoginVehicle(type) {
-  loginVehicle = type;
-  ['motorcycle','bicycle','walking'].forEach(t => {
-    const el = document.getElementById('lv-' + (t==='motorcycle'?'motor':t==='bicycle'?'bicycle':'walking'));
-    if(el) el.classList.toggle('selected', t === type);
-  });
-  // Show/hide plate field — walking doesn't need plate
-  const plateField = document.getElementById('login-plate-field');
-  if(plateField) {
-    plateField.style.display = type === 'walking' ? 'none' : 'block';
-    if(type === 'walking') document.getElementById('login-plate').value = '';
-  }
-}
-window.selectLoginVehicle = selectLoginVehicle;
-
-// ═══════════════════════════════════════════════════════
-// ── Heartbeat: ping Firebase every 5 min when online ──
-let heartbeatInterval = null;
-function startHeartbeat(){
-  if(heartbeatInterval) clearInterval(heartbeatInterval);
-  heartbeatInterval = setInterval(async()=>{
-    if(isOnline && riderDocId){
-      try{ await updateDoc(doc(db,'riders',riderDocId),{ lastSeenAt: new Date().toISOString() }); }
-      catch(e){}
-    }
-  }, 5*60*1000);
-}
-
-//  SCREEN NAVIGATION
-// ═══════════════════════════════════════════════════════
-function showLogin(){
-  document.getElementById('login-screen').style.display='flex';
-  document.getElementById('register-screen').style.display='none';
-}
-function showRegister(){
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('register-screen').style.display='flex';
-  regStep(1);
-}
-window.showLogin    = showLogin;
-window.showRegister = showRegister;
-
-// ═══════════════════════════════════════════════════════
-//  REGISTRATION FLOW
-// ═══════════════════════════════════════════════════════
-function regStep(n){
-  [1,2,3].forEach(i=>{
-    document.getElementById('reg-step-'+i).style.display = i===n?'block':'none';
-    const dot = document.getElementById('step-dot-'+i);
-    dot.classList.toggle('done',   i < n);
-    dot.classList.toggle('active', i === n);
-  });
-}
-
-function showErr(id, msg){ const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',3000); }
-
-function regNext(step){
-  if(step===1){
-    const name  = document.getElementById('reg-name').value.trim();
-    const sid   = document.getElementById('reg-sid').value.trim();
-    const age   = document.getElementById('reg-age').value.trim();
-    const phone = document.getElementById('reg-phone').value.trim();
-    const pin   = document.getElementById('reg-pin').value.trim();
-    if(!name||!sid||!age||!phone||!pin){ showErr('reg-err-1','⚠️ Please fill in all fields'); return; }
-    if(pin.length!==4||isNaN(pin)){      showErr('reg-err-1','⚠️ PIN must be exactly 4 digits'); return; }
-    if(parseInt(age)<18){               showErr('reg-err-1','⚠️ You must be at least 18 years old'); return; }
-    regInfo = {...regInfo, name, sid, age, phone, pin};
-    regStep(2);
-  } else if(step===2){
-    const tng  = document.getElementById('reg-tng').value.trim();
-    const bank = document.getElementById('reg-bank').value.trim();
-    const bankName = document.getElementById('reg-bankname').value.trim();
-    if(regInfo.wallet==='TNG' && !tng){     showErr('reg-err-2','⚠️ Please enter your TNG phone number'); return; }
-    if(regInfo.wallet==='DuitNow' && (!bank||!bankName)){ showErr('reg-err-2','⚠️ Please enter bank details'); return; }
-    regInfo = {...regInfo, tng, bank, bankName};
-    // Show review
-    document.getElementById('reg-review').innerHTML = `
-      <div style="display:grid;gap:8px;">
-        ${[
-          ['👤 Name',       regInfo.name],
-          ['🎓 Student ID', regInfo.sid],
-          ['📅 Age',        regInfo.age + ' years old'],
-          ['📞 Phone',      regInfo.phone],
-          ['🔐 PIN',        '••••'],
-          ['💳 Wallet',     regInfo.wallet === 'TNG'
-            ? 'Touch \'n Go — ' + regInfo.tng
-            : 'DuitNow — ' + regInfo.bankName + ' ' + regInfo.bank],
-        ].map(([l,v])=>`
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
-            <span style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;">${l}</span>
-            <span style="font-size:13px;font-weight:600;color:var(--cream);">${v}</span>
-          </div>`).join('')}
-      </div>`;
-    regStep(3);
-  }
-}
-window.regNext = regNext;
-
-function regBack(toStep){ regStep(toStep); }
-window.regBack = regBack;
-
-function selectWallet(type){
-  regInfo.wallet = type;
-  document.getElementById('wc-tng').classList.toggle('selected',     type==='TNG');
-  document.getElementById('wc-duitnow').classList.toggle('selected', type==='DuitNow');
-  document.getElementById('tng-field').style.display  = type==='TNG'     ? 'block' : 'none';
-  document.getElementById('bank-field').style.display = type==='DuitNow' ? 'block' : 'none';
-}
-window.selectWallet = selectWallet;
-
-async function submitRegistration(){
-  const btn = document.querySelector('#reg-step-3 .reg-btn');
-  btn.textContent = '⏳ Submitting...'; btn.disabled = true;
-
-  const docId = phoneToId(regInfo.phone);
-  const ref   = doc(db, 'riders', docId);
-
-  // Check if phone already registered
-  const existing = await getDoc(ref);
-  if(existing.exists()){ showErr('reg-err-3','⚠️ This phone number is already registered!'); btn.textContent='Submit Registration 🎉'; btn.disabled=false; return; }
-
-  const riderDoc = {
-    name:           regInfo.name,
-    sid:            regInfo.sid,
-    age:            parseInt(regInfo.age),
-    phone:          regInfo.phone,
-    pinHash:        regInfo.pin,          // plain PIN (simple version)
-    wallet:         regInfo.wallet,
-    tngPhone:       regInfo.wallet==='TNG'     ? regInfo.tng     : '',
-    bankAccount:    regInfo.wallet==='DuitNow' ? regInfo.bank    : '',
-    bankName:       regInfo.wallet==='DuitNow' ? regInfo.bankName: '',
-    status:         'pending',            // boss must approve
-    totalEarnings:  0,
-    totalOrders:    0,
-    todayEarnings:  0,
-    todayOrders:    0,
-    todayDate:      new Date().toDateString(),
-    unpaidEarnings: 0,
-    completedOrders:[],
-    registeredAt:   serverTimestamp(),
-  };
+window.doAuth = async () => {
+  const email = document.getElementById('auth-email').value.trim();
+  const pass  = document.getElementById('auth-password').value;
+  const name  = document.getElementById('auth-name').value.trim();
+  const phone = document.getElementById('auth-phone').value.trim();
+  const err   = document.getElementById('auth-err');
+  const btn   = document.getElementById('auth-btn');
+  err.style.display = 'none';
+  btn.disabled = true; btn.textContent = '⏳';
 
   try {
-    await setDoc(ref, riderDoc);
-    btn.textContent = '✅ Submitted!';
-    setTimeout(()=>{
-      showLogin();
-      document.getElementById('login-phone').value = regInfo.phone;
-      showToast('✅ Registered! Wait for boss approval 🎉');
-      regInfo = { name:'', sid:'', age:'', phone:'', pin:'', wallet:'TNG', tng:'', bank:'', bankName:'' };
-    }, 1000);
-  } catch(e){
-    showErr('reg-err-3', '❌ Error: '+e.message);
-    btn.textContent='Submit Registration 🎉'; btn.disabled=false;
+    if (authMode === 'signup') {
+      if (!name || !email || !pass) throw new Error('Please fill in all fields.');
+      if (pass.length < 6) throw new Error('Password must be at least 6 characters.');
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      await updateProfile(cred.user, { displayName: name });
+      await setDoc(doc(db, 'riders', cred.user.uid), {
+        uid:       cred.user.uid,
+        name,
+        phone:     phone || '',
+        email,
+        status:    'active',
+        isOnline:  false,
+        createdAt: new Date().toISOString(),
+        delivered: 0,
+        earnings:  0,
+      });
+    } else {
+      await signInWithEmailAndPassword(auth, email, pass);
+    }
+  } catch(e) {
+    err.textContent = e.message.replace('Firebase: ','').replace(/\(auth.*\)/,'');
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = authMode === 'signup' ? 'Create Account' : 'Sign In';
   }
-}
-window.submitRegistration = submitRegistration;
+};
 
-// ═══════════════════════════════════════════════════════
-//  LOGIN (phone + PIN lookup in Firestore)
-// ═══════════════════════════════════════════════════════
-async function doRiderLogin(){
-  const phone = document.getElementById('login-phone').value.trim();
-  const pin   = document.getElementById('rider-pin').value.trim();
-  const plate = document.getElementById('login-plate').value.trim().toUpperCase();
-  const err   = document.getElementById('rider-err');
+window.doLogout = async () => {
+  if (unsubOrders) unsubOrders();
+  if (currentUser) {
+    await updateDoc(doc(db,'riders',currentUser.uid), { isOnline: false }).catch(()=>{});
+  }
+  await signOut(auth);
+};
 
-  if(!phone||!pin){ err.textContent='⚠️ Enter phone and PIN'; err.style.display='block'; return; }
-
-  // Validate plate if not walking
-  if(loginVehicle !== 'walking' && !plate){
-    err.textContent='⚠️ Please enter your plate number';
-    err.style.display='block';
-    document.getElementById('login-plate').focus();
+// ── Auth state ──
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    showScreen('auth');
     return;
   }
-
-  const loginBtn = document.querySelector('#login-screen .login-btn');
-  loginBtn.textContent = '⏳ Logging in…'; loginBtn.disabled = true;
-
-  try {
-    const docId = phoneToId(phone);
-    const snap  = await getDoc(doc(db,'riders',docId));
-
-    if(!snap.exists()){ throw new Error('Phone not registered'); }
-    const data = snap.data();
-    if(data.pinHash !== pin){ throw new Error('Wrong PIN'); }
-    if(data.status === 'pending'){
-      err.textContent = '⏳ Account pending boss approval';
-      err.style.display='block';
-      loginBtn.textContent='Login →'; loginBtn.disabled=false;
-      return;
-    }
-    if(data.status === 'suspended'){
-      err.textContent = '🚫 Account suspended. Contact boss.';
-      err.style.display='block';
-      loginBtn.textContent='Login →'; loginBtn.disabled=false;
-      return;
-    }
-
-    // Save vehicle + plate to Firebase on each login
-    const updateData = { vehicle: loginVehicle, isOnline: false }; // always reset to offline on login
-    if(loginVehicle !== 'walking') updateData.plateNumber = plate;
-    else updateData.plateNumber = '';
-    await updateDoc(doc(db,'riders',docId), updateData);
-
-    // Success
-    riderData  = { ...data, ...updateData };
-    riderDocId = docId;
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('app').style.display='block';
-    document.getElementById('rider-name-display').textContent = data.name.split(' ')[0];
-    const av=document.getElementById('rider-avatar-initial'); if(av) av.textContent=data.name.charAt(0).toUpperCase();
-    const avatar = document.getElementById('rider-avatar-initial');
-    if(avatar) avatar.textContent = data.name.charAt(0).toUpperCase();
-
-    if(data.todayDate !== new Date().toDateString()){
-      await updateDoc(doc(db,'riders',docId),{ todayEarnings:0, todayOrders:0, todayDate:new Date().toDateString() });
-    }
-
-    listenToRiderDoc();
-    initOrderListener();
-    startHeartbeat();
-    showToast('👋 Welcome, ' + data.name.split(' ')[0] + '! ' + (loginVehicle==='walking'?'🚶':loginVehicle==='bicycle'?'🚲':'🏍️'));
-  } catch(e){
-    err.textContent = '❌ ' + e.message;
-    err.style.display='block';
-    setTimeout(()=>err.style.display='none', 3000);
-  }
-  loginBtn.textContent='Login →'; loginBtn.disabled=false;
-}
-window.doRiderLogin = doRiderLogin;
-document.addEventListener('keydown', e=>{ if(e.key==='Enter') doRiderLogin(); });
-
-async function doLogout(){
-  if(myActive){ showToast('⚠️ Finish your active delivery first!'); return; }
-  // Set offline in Firebase before logout
-  try { await updateDoc(doc(db,'riders',riderDocId),{ isOnline: false }); } catch(e){}
-  if(heartbeatInterval) clearInterval(heartbeatInterval);
-  heartbeatInterval = null;
-  if(unsubOrders) unsubOrders();
-  if(unsubRider)  unsubRider();
-  document.getElementById('app').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
-  riderData=null; riderDocId=''; isOnline=false;
-  allOrders=[]; myActive=null; completedOrders=[];
-  todayEarnings=0; totalEarnings=0;
-  document.getElementById('login-phone').value='';
-  document.getElementById('rider-pin').value='';
-  const tog=document.getElementById('online-toggle');
-  tog.classList.remove('online');
-  tog.querySelector('.toggle-label').textContent='OFFLINE';
-}
-window.doLogout = doLogout;
-
-// ═══════════════════════════════════════════════════════
-//  REALTIME RIDER DOC LISTENER
-// ═══════════════════════════════════════════════════════
-function listenToRiderDoc(){
-  if(unsubRider) unsubRider();
-  unsubRider = onSnapshot(doc(db,'riders',riderDocId), snap=>{
-    if(!snap.exists()) return;
-    const d = snap.data();
-    const today = new Date().toDateString();
-    riderData        = d;
-    totalEarnings    = d.totalEarnings  || 0;
-    todayEarnings    = d.todayDate===today ? (d.todayEarnings||0) : 0;
-    completedOrders  = d.completedOrders || [];
-    renderHistory();
-    updateEarnings();
-  });
-}
-
-// ═══════════════════════════════════════════════════════
-//  ORDER LISTENER
-// ═══════════════════════════════════════════════════════
-function initOrderListener(){
-  const q = query(collection(db,'orders'), orderBy('timestamp','desc'));
-  unsubOrders = onSnapshot(q, snap=>{
-    allOrders=[];
-    snap.forEach(d=>allOrders.push({ docId:d.id, ...d.data(), time:d.data().timestamp?.toDate()||new Date() }));
-
-    if(!myActive){
-      const assigned = allOrders.find(o=>
-        o.status==='delivering' && o.rider===riderData?.name && o.type==='delivery'
-      );
-      if(assigned){
-        myActive = assigned;
-        showToast('🔔 Boss assigned you an order! Check Active tab 🛵');
-        switchTab('active', document.getElementById('nav-active'));
-      }
-    }
-    if(myActive){
-      const updated = allOrders.find(o=>o.docId===myActive.docId);
-      if(updated) myActive=updated;
-    }
-    renderAvailable();
-    renderActive();
-  });
-}
-
-// ═══════════════════════════════════════════════════════
-//  ONLINE TOGGLE
-// ═══════════════════════════════════════════════════════
-async function toggleOnline(){
-  if(myActive){ showToast('⚠️ Finish your active delivery first!'); return; }
-  isOnline=!isOnline;
-  const tog=document.getElementById('online-toggle');
-  const lbl=tog.querySelector('.toggle-label');
-  tog.classList.toggle('online',isOnline);
-  lbl.textContent=isOnline?'ONLINE':'OFFLINE';
-  showToast(isOnline?'🟢 You are Online!':'🔴 You are Offline');
-  document.getElementById('offline-banner').style.display=isOnline?'none':'flex';
-  // ✅ Sync online status to Firebase so Admin knows
-  try {
-    const update = { isOnline };
-    if(isOnline) update.lastSeenAt = new Date().toISOString();
-    await updateDoc(doc(db,'riders',riderDocId), update);
-  } catch(e){ console.error('Online sync error:',e); }
-  renderAvailable();
-}
-window.toggleOnline = toggleOnline;
-
-// ═══════════════════════════════════════════════════════
-//  RENDER AVAILABLE
-// ═══════════════════════════════════════════════════════
-function timeAgo(date){
-  if(!date) return '';
-  const d=Math.floor((new Date()-date)/1000);
-  if(d<60) return d+'s ago';
-  if(d<3600) return Math.floor(d/60)+'m ago';
-  return Math.floor(d/3600)+'h ago';
-}
-
-function renderAvailable(){
-  const list=document.getElementById('available-list');
-  if(!isOnline){
-    document.getElementById('offline-banner').style.display='flex';
-    list.innerHTML=`<div class="empty-state"><div class="empty-icon">🔴</div><div class="empty-title">You\'re Offline</div><div class="empty-sub">Toggle Online to see orders</div></div>`;
-    document.getElementById('avail-count').textContent='';
-    document.getElementById('new-order-dot').style.display='none';
-    return;
-  }
-  document.getElementById('offline-banner').style.display='none';
-
-  const available=allOrders.filter(o=>
-    o.type==='delivery' && !myActive && (
-      (o.status==='ready' && !o.rider)||
-      (o.status==='ready' && o.rider===riderData?.name)
-    )
-  );
-
-  document.getElementById('avail-count').textContent=available.length>0?`(${available.length})`:'';
-  document.getElementById('new-order-dot').style.display=available.length>0?'block':'none';
-
-  if(!available.length){
-    list.innerHTML=`<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No orders yet</div><div class="empty-sub">Stay online — orders appear here instantly</div></div>`;
-    return;
-  }
-
-  list.innerHTML=available.map((o,i)=>`
-    <div class="order-card" style="animation-delay:${i*0.05}s">
-      <div class="order-card-header">
-        <div class="order-num-badge"><span class="num">#${(o.code||'').slice(-3)}</span><span class="code">${o.code||'—'}</span></div>
-        <div class="order-header-info">
-          <div class="order-customer-name">${o.name}</div>
-          <div class="order-meta-row"><span class="order-time">⏱ ${timeAgo(o.time)}</span><span class="status-chip chip-ready">🟢 READY</span></div>
-        </div>
-        <div class="order-total-badge">RM ${(o.total||0).toFixed(2)}</div>
-      </div>
-      <div class="order-card-body">
-        <div class="order-items-list">${(o.items||[]).map(it=>`<span>${it.emoji} ${it.name}</span> ×${it.qty}<br>`).join('')}</div>
-        <div class="address-row">
-          <span class="address-icon">📍</span>
-          <div><div class="address-label">Deliver to</div><div class="address-text">${o.address||'MMU Campus'}</div></div>
-        </div>
-        <div class="phone-row">📞 <a href="tel:${o.phone}">${o.phone}</a></div>
-        <div class="action-row">
-          <button class="action-btn btn-accept" onclick="acceptOrder('${o.docId}')">🛵 Accept · +RM ${EARN_PER_ORDER.toFixed(2)}</button>
-        </div>
-      </div>
-    </div>`).join('');
-}
-
-// ═══════════════════════════════════════════════════════
-//  RENDER ACTIVE
-// ═══════════════════════════════════════════════════════
-function renderActive(){
-  const wrap=document.getElementById('active-delivery-wrap');
-  if(!myActive){
-    wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">🛵</div><div class="empty-title">No active delivery</div><div class="empty-sub">Accept an order to start riding</div></div>`;
-    return;
-  }
-  const o=myActive;
-  const pickedUp=o._pickedUp||false;
-  wrap.innerHTML=`
-    <div class="active-delivery">
-      <div class="active-label"><div class="active-pulse"></div>ACTIVE DELIVERY · +RM ${EARN_PER_ORDER.toFixed(2)}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div><div style="font-size:18px;font-weight:800;color:var(--cream);">${o.name}</div><div style="font-size:12px;color:var(--text2);">${o.code}</div></div>
-        <div style="font-size:22px;font-weight:800;color:var(--green);">RM ${(o.total||0).toFixed(2)}</div>
-      </div>
-      <div class="address-row" style="margin-bottom:10px;">
-        <span class="address-icon">📦</span>
-        <div><div class="address-label">Pick up at</div><div class="address-text">Soy & Oden Stall — MMU Cafeteria</div></div>
-      </div>
-      <div class="address-row" style="margin-bottom:10px;">
-        <span class="address-icon">📍</span>
-        <div><div class="address-label">Deliver to</div><div class="address-text">${o.address||'MMU Campus'}</div></div>
-      </div>
-      <div class="phone-row">📞 <a href="tel:${o.phone}" style="color:var(--green);">${o.phone}</a></div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
-        ${(o.items||[]).map(it=>`<div style="font-size:13px;color:var(--text);margin-bottom:2px;">${it.emoji} ${it.name} ×${it.qty}</div>`).join('')}
-      </div>
-      <div class="action-row" style="gap:8px;">
-        <a class="action-btn btn-nav" href="https://maps.google.com?q=${encodeURIComponent(o.address||'MMU Cyberjaya')}" target="_blank" style="text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;">🗺 Maps</a>
-        ${pickedUp
-          ? `<button class="action-btn btn-deliver" onclick="markDelivered('${o.docId}')">✅ Mark as Delivered</button>`
-          : `<button class="action-btn btn-pickup" onclick="markPickedUp('${o.docId}')">📦 Picked Up from Stall</button>`}
-      </div>
-    </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;">
-      ${[
-        {label:'Order Accepted',       done:true},
-        {label:'Picked Up at Stall',   done:pickedUp},
-        {label:'Delivered to Customer',done:false},
-      ].map((s,i)=>`
-        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i<2?'border-bottom:1px solid var(--border)':''}">
-          <div style="width:32px;height:32px;border-radius:10px;background:${s.done?'var(--green-dim)':'var(--bg3)'};display:flex;align-items:center;justify-content:center;">${s.done?'✅':'⏳'}</div>
-          <span style="font-size:13px;font-weight:600;color:${s.done?'var(--green)':'var(--text3)'};">${s.label}</span>
-          ${s.done?'<span style="margin-left:auto;font-size:11px;color:var(--green);">✓</span>':''}
-        </div>`).join('')}
-    </div>`;
-}
-
-// ═══════════════════════════════════════════════════════
-//  RENDER HISTORY
-// ═══════════════════════════════════════════════════════
-function renderHistory(){
-  document.getElementById('h-total-orders').textContent = completedOrders.length;
-  document.getElementById('h-total-earn').textContent   = 'RM '+totalEarnings.toFixed(2);
-  document.getElementById('h-today').textContent        = 'RM '+todayEarnings.toFixed(2);
-  document.getElementById('h-avg-earn').textContent     = completedOrders.length
-    ? 'RM '+(totalEarnings/completedOrders.length).toFixed(2) : 'RM 0';
-
-  const list=document.getElementById('history-list');
-
-  // Show unpaid earnings banner
-  const unpaid = riderData?.unpaidEarnings || 0;
-  const unpaidHtml = unpaid>0 ? `
-    <div style="background:var(--green-dim);border:1.5px solid rgba(126,200,80,0.25);border-radius:var(--r);padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">
-      <div style="font-size:28px;">💰</div>
-      <div>
-        <div style="font-size:11px;color:var(--green);font-weight:700;letter-spacing:.08em;font-family:'DM Mono',monospace;">PENDING PAYMENT</div>
-        <div style="font-size:22px;font-weight:800;color:var(--cream);">RM ${unpaid.toFixed(2)}</div>
-        <div style="font-size:11px;color:var(--text3);">Boss will transfer to your ${riderData?.wallet||'TNG'} soon</div>
-      </div>
-    </div>` : `
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
-      <span style="font-size:20px;">✅</span>
-      <div style="font-size:13px;color:var(--text2);">All earnings paid up to date!</div>
-    </div>`;
-
-  if(!completedOrders.length){
-    list.innerHTML=unpaidHtml+`<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No deliveries yet</div><div class="empty-sub">History saved permanently in cloud ☁️</div></div>`;
-    return;
-  }
-  const sorted=[...completedOrders].reverse();
-  list.innerHTML=unpaidHtml+sorted.map((o,i)=>`
-    <div class="history-item" style="animation-delay:${i*0.04}s">
-      <div class="hi-icon">🛵</div>
-      <div class="hi-info">
-        <div class="hi-name">${o.name||'Customer'}</div>
-        <div class="hi-meta">${o.code||'—'} · ${o.address||''} · ${o.completedAt?new Date(o.completedAt).toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'}):''}</div>
-      </div>
-      <div class="hi-earn">+RM ${(o.earning||EARN_PER_ORDER).toFixed(2)}</div>
-    </div>`).join('');
-}
-
-function updateEarnings(){
-  document.getElementById('earn-today').textContent  = 'RM '+todayEarnings.toFixed(2);
-  document.getElementById('earn-orders').textContent = completedOrders.length;
-}
-
-// ═══════════════════════════════════════════════════════
-//  ORDER ACTIONS
-// ═══════════════════════════════════════════════════════
-async function acceptOrder(docId){
-  if(myActive){ showToast('⚠️ Finish current delivery first!'); return; }
-  try{
-    const order=allOrders.find(o=>o.docId===docId);
-    if(order?.status==='ready'){
-      await updateDoc(doc(db,'orders',docId),{status:'delivering',rider:riderData.name});
-    }
-    myActive=allOrders.find(o=>o.docId===docId);
-    if(myActive) myActive.status='delivering';
-    showToast('🛵 Order accepted! Go pick it up!');
-    switchTab('active',document.getElementById('nav-active'));
-    renderActive(); renderAvailable();
-  }catch(e){ showToast('❌ '+e.message); }
-}
-window.acceptOrder=acceptOrder;
-
-async function markPickedUp(docId){
-  if(myActive) myActive._pickedUp=true;
-  showToast('📦 Picked up! Deliver to customer 🛵');
-  renderActive();
-}
-window.markPickedUp=markPickedUp;
-
-async function markDelivered(docId){
-  try{
-    const o=myActive;
-    const earning = o.riderEarning || DELIVERY_FEE; // use order's riderEarning field
-    const entry={
-      docId:       o.docId,
-      code:        o.code||'—',
-      name:        o.name||'Customer',
-      address:     o.address||'—',
-      total:       o.total||0,
-      earning,
-      completedAt: new Date().toISOString(),
-    };
-    await updateDoc(doc(db,'orders',docId),{status:'done'});
-    await updateDoc(doc(db,'riders',riderDocId),{
-      totalEarnings:   increment(earning),
-      totalOrders:     increment(1),
-      todayEarnings:   increment(earning),
-      todayOrders:     increment(1),
-      unpaidEarnings:  increment(earning),
-      todayDate:       new Date().toDateString(),
-      completedOrders: arrayUnion(entry),
+  currentUser = user;
+  // Check rider doc
+  const snap = await getDoc(doc(db,'riders',user.uid));
+  if (!snap.exists()) {
+    // Create doc if missing (e.g. Google sign-in)
+    await setDoc(doc(db,'riders',user.uid), {
+      uid: user.uid, name: user.displayName||'Rider',
+      email: user.email, status:'active', isOnline:false,
+      createdAt: new Date().toISOString(), delivered:0, earnings:0,
     });
-    myActive=null;
-    showToast('🎉 Delivered! +RM '+EARN_PER_ORDER.toFixed(2)+' added!');
-    renderActive(); renderAvailable();
-    switchTab('available',document.getElementById('nav-available'));
-  }catch(e){ showToast('❌ '+e.message); console.error(e); }
-}
-window.markDelivered=markDelivered;
+    riderDoc = { status:'active', isOnline:false, delivered:0, earnings:0 };
+  } else {
+    riderDoc = snap.data();
+  }
 
-// ═══════════════════════════════════════════════════════
-//  TABS
-// ═══════════════════════════════════════════════════════
-function switchTab(name,el){
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn,.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
-  document.querySelectorAll('.tab-btn').forEach(b=>{
-    if(b.getAttribute('onclick')?.includes("'"+name+"'")) b.classList.add('active');
+  if (riderDoc.status === 'suspended') {
+    showScreen('suspended');
+    return;
+  }
+
+  document.getElementById('auth-err').style.display = 'none';
+  document.getElementById('auth-btn').disabled = false;
+  document.getElementById('auth-btn').textContent = authMode === 'signup' ? 'Create Account' : 'Sign In';
+  showScreen('app');
+  startListening();
+});
+
+function showScreen(s) {
+  document.getElementById('auth-screen').style.display      = s==='auth'      ? 'flex'  : 'none';
+  document.getElementById('suspended-screen').style.display = s==='suspended'  ? 'flex'  : 'none';
+  document.getElementById('app').style.display              = s==='app'        ? 'block' : 'none';
+}
+
+// ── Online toggle ──
+window.toggleOnline = async () => {
+  isOnline = !isOnline;
+  const toggle = document.getElementById('online-toggle');
+  const label  = document.getElementById('online-label');
+  toggle.classList.toggle('on', isOnline);
+  label.textContent = isOnline ? 'Online' : 'Offline';
+  await updateDoc(doc(db,'riders',currentUser.uid), { isOnline });
+};
+
+// ── Listen to orders ──
+function startListening() {
+  if (unsubOrders) unsubOrders();
+  // Listen to all delivery orders that are ready (available) or assigned to this rider
+  const q = query(collection(db,'orders'), where('type','==','delivery'));
+  unsubOrders = onSnapshot(q, snap => {
+    allOrders = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    allOrders.sort((a,b) => {
+      const ta = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(0);
+      const tb = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(0);
+      return tb - ta;
+    });
+    renderAll();
   });
-  if(el) el.classList.add('active');
 }
-window.switchTab=switchTab;
 
-// ═══════════════════════════════════════════════════════
-//  TOAST
-// ═══════════════════════════════════════════════════════
-let toastT;
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  clearTimeout(toastT);
-  toastT=setTimeout(()=>t.classList.remove('show'),3500);
+function renderAll() {
+  renderAvailable();
+  renderMine();
+  renderHistory();
 }
-window.showToast=showToast;
+
+// ── Available: ready orders with no rider ──
+function renderAvailable() {
+  const orders = allOrders.filter(o => o.status === 'ready' && !o.rider);
+  const list  = document.getElementById('available-list');
+  const empty = document.getElementById('available-empty');
+  if (!orders.length) { list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = orders.map(o => buildCard(o, 'available')).join('');
+}
+
+// ── Mine: orders assigned to this rider ──
+function renderMine() {
+  const riderName = currentUser.displayName || currentUser.email;
+  const orders = allOrders.filter(o =>
+    o.rider === riderName && ['delivering'].includes(o.status)
+  );
+  const list  = document.getElementById('mine-list');
+  const empty = document.getElementById('mine-empty');
+  if (!orders.length) { list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = orders.map(o => buildCard(o, 'mine')).join('');
+}
+
+// ── History: done orders by this rider ──
+function renderHistory() {
+  const riderName = currentUser.displayName || currentUser.email;
+  const orders = allOrders.filter(o => o.rider === riderName && o.status === 'done');
+  const list  = document.getElementById('history-list');
+  const empty = document.getElementById('history-empty');
+
+  document.getElementById('stat-delivered').textContent = orders.length;
+  const earn = orders.reduce((s,o) => s + (o.riderEarning||1.50), 0);
+  document.getElementById('stat-earning').textContent = 'RM ' + earn.toFixed(2);
+
+  if (!orders.length) { list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = orders.map(o => buildCard(o, 'history')).join('');
+}
+
+function buildCard(o, mode) {
+  const date  = o.timestamp?.toDate ? o.timestamp.toDate().toLocaleString('en-MY',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+  const items = (o.items||[]).map(i =>
+    `<div class="item-row"><span>${i.emoji} ${i.name} ×${i.qty}</span><span>RM ${(i.price*i.qty).toFixed(2)}</span></div>`
+  ).join('');
+
+  let badge = '';
+  if (mode==='available') badge = `<span class="card-badge badge-available">🔔 Available</span>`;
+  else if (mode==='mine')  badge = `<span class="card-badge badge-delivering">🛵 Delivering</span>`;
+  else                     badge = `<span class="card-badge badge-mine">✅ Done</span>`;
+
+  let actions = '';
+  if (mode === 'available') {
+    actions = `<button class="grab-btn" onclick="grabOrder('${o.id}')">🛵 Grab Order</button>`;
+  } else if (mode === 'mine') {
+    actions = `
+      <button class="deliver-btn" onclick="markDelivered('${o.id}')">🎉 Mark Delivered</button>
+      <button class="drop-btn" onclick="dropOrder('${o.id}')">↩</button>`;
+  }
+
+  return `
+  <div class="order-card ${mode==='mine'?'mine':mode==='available'?'available':''}">
+    <div class="card-header">
+      <div class="card-icon ${mode==='mine'?'mine':''}">🛵</div>
+      <div class="card-info">
+        <div class="card-code">${o.code||'Order'}</div>
+        <div class="card-meta">${date} · ${o.merchantName||''}</div>
+      </div>
+      ${badge}
+    </div>
+    <div class="card-body">
+      <div class="items-box">
+        ${items}
+        <div class="total-row"><span>Total</span><span>RM ${(o.total||0).toFixed(2)}</span></div>
+      </div>
+      ${o.name ? `<div class="info-row"><span class="info-icon">👤</span><div class="info-text"><b>${o.name}</b>${o.phone ? ' · '+o.phone : ''}</div></div>` : ''}
+      ${o.address ? `<div class="info-row"><span class="info-icon">📍</span><div class="info-text"><b>${o.address}</b></div></div>` : ''}
+      ${(o.deliverySlot||o.slot) ? `<div class="info-row"><span class="info-icon">📅</span><div class="info-text">${o.deliverySlot||o.slot}</div></div>` : ''}
+      ${o.note ? `<div class="info-row"><span class="info-icon">📝</span><div class="info-text">${o.note}</div></div>` : ''}
+      <div class="info-row"><span class="info-icon">💰</span><div class="info-text">Rider earning: <b style="color:#22c55e;">RM ${(o.riderEarning||1.50).toFixed(2)}</b></div></div>
+    </div>
+    ${actions ? `<div class="card-actions">${actions}</div>` : ''}
+  </div>`;
+}
+
+// ── Grab order ──
+window.grabOrder = async (id) => {
+  if (!isOnline) { toast('⚠️ Go online first!'); return; }
+  const riderName = currentUser.displayName || currentUser.email;
+  // Check if already have an active order
+  const myActive = allOrders.filter(o => o.rider === riderName && o.status === 'delivering');
+  if (myActive.length >= 2) { toast('⚠️ Max 2 active orders at a time'); return; }
+  try {
+    await updateDoc(doc(db,'orders',id), {
+      rider:      riderName,
+      riderUid:   currentUser.uid,
+      status:     'delivering',
+      updatedAt:  serverTimestamp(),
+    });
+    toast('🛵 Order grabbed!');
+    switchTab('mine', document.querySelectorAll('.tab')[1]);
+  } catch(e) { toast('❌ ' + e.message); }
+};
+
+// ── Mark delivered ──
+window.markDelivered = async (id) => {
+  try {
+    await updateDoc(doc(db,'orders',id), { status:'done', updatedAt:serverTimestamp() });
+    toast('🎉 Delivered!');
+  } catch(e) { toast('❌ ' + e.message); }
+};
+
+// ── Drop order (unassign) ──
+window.dropOrder = async (id) => {
+  if (!confirm('Drop this order? It will go back to available.')) return;
+  try {
+    await updateDoc(doc(db,'orders',id), {
+      rider:     null,
+      riderUid:  null,
+      status:    'ready',
+      updatedAt: serverTimestamp(),
+    });
+    toast('↩ Order dropped');
+  } catch(e) { toast('❌ ' + e.message); }
+};
+
+// ── Tab switch ──
+window.switchTab = (tab, el) => {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['available','mine','history'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
+  });
+};
+
+// ── Toast ──
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+document.getElementById('auth-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') window.doAuth();
+});
 </script>
 </body>
 </html>
