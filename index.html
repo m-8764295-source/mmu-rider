@@ -461,6 +461,7 @@ window.grabOrder = async (id) => {
     await updateDoc(doc(db,'orders',id), {
       rider:      riderName,
       riderUid:   currentUser.uid,
+      riderPhone: riderDoc.phone || '',
       status:     'delivering',
       updatedAt:  serverTimestamp(),
     });
@@ -482,10 +483,11 @@ window.dropOrder = async (id) => {
   if (!confirm('Drop this order? It will go back to available.')) return;
   try {
     await updateDoc(doc(db,'orders',id), {
-      rider:     null,
-      riderUid:  null,
-      status:    'ready',
-      updatedAt: serverTimestamp(),
+      rider:      null,
+      riderUid:   null,
+      riderPhone: null,
+      status:     'ready',
+      updatedAt:  serverTimestamp(),
     });
     toast('↩ Order dropped');
   } catch(e) { toast('❌ ' + e.message); }
