@@ -397,7 +397,7 @@ function renderHistory() {
   const empty = document.getElementById('history-empty');
 
   document.getElementById('stat-delivered').textContent = orders.length;
-  const earn = orders.reduce((s,o) => s + (o.riderEarning||1.50), 0);
+  const earn = orders.reduce((s,o) => s + (o.riderEarning||1.00), 0);
   document.getElementById('stat-earning').textContent = 'RM ' + earn.toFixed(2);
 
   if (!orders.length) { list.innerHTML=''; empty.style.display='block'; return; }
@@ -444,7 +444,7 @@ function buildCard(o, mode) {
       ${o.address ? `<div class="info-row"><span class="info-icon">📍</span><div class="info-text"><b>${o.address}</b></div></div>` : ''}
       ${(o.deliverySlot||o.slot) ? `<div class="info-row"><span class="info-icon">📅</span><div class="info-text">${o.deliverySlot||o.slot}</div></div>` : ''}
       ${o.note ? `<div class="info-row"><span class="info-icon">📝</span><div class="info-text">${o.note}</div></div>` : ''}
-      <div class="info-row"><span class="info-icon">💰</span><div class="info-text">Rider earning: <b style="color:#22c55e;">RM ${(o.riderEarning||1.50).toFixed(2)}</b></div></div>
+      <div class="info-row"><span class="info-icon">💰</span><div class="info-text">Rider earning: <b style="color:#22c55e;">RM ${(o.riderEarning||1.00).toFixed(2)}</b></div></div>
     </div>
     ${actions ? `<div class="card-actions">${actions}</div>` : ''}
   </div>`;
